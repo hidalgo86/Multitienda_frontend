@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-50: #fdf2f8;
+  --color-brand-100: #fce7f3;
+  --color-brand-200: #fbcfe8;
+  --color-brand-300: #f9a8d4;
+  --color-brand-400: #f472b6;
+  --color-brand-500: #ec4899;
+  --color-brand-600: #db2777;
+  --color-brand-700: #be185d;
+  --color-brand-800: #9d174d;
+  --color-brand-900: #831843;
+  --color-brand-950: #500724;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Utilidades responsivas globales */
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Utilidades de truncamiento de texto */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Mejoras de rendimiento para animaciones */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Transiciones suaves */
+* {
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Estilos responsivos para toasts de Sonner */
+[data-sonner-toaster] [data-sonner-toast] {
+  min-width: 320px !important;
+  max-width: 500px !important;
+  font-size: 14px !important;
+  padding: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Responsive breakpoints para toasts */
+@media (min-width: 640px) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    min-width: 400px !important;
+    font-size: 15px !important;
+    padding: 18px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  [data-sonner-toaster] [data-sonner-toast] {
+    min-width: 450px !important;
+    font-size: 16px !important;
+    padding: 20px !important;
+  }
+}
+
+/* Mejores estilos para botones de accion en toasts */
+[data-sonner-toaster] [data-sonner-toast] button {
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+@media (min-width: 1024px) {
+  [data-sonner-toaster] [data-sonner-toast] button {
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+  }
+}
+
+/* Solucion para iconos de cierre y toast icons */
+[data-sonner-toaster] [data-close-button] {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+[data-sonner-toaster] [data-close-button]:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Iconos de toast personalizados */
+[data-sonner-toaster] [data-icon] {
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Ocultar iconos rotos y reemplazar con texto */
+[data-sonner-toaster] [data-sonner-toast] svg {
+  display: none !important;
+}
+
+/*  indicadores de estado con pseudo-elementos */
+[data-sonner-toaster] [data-sonner-toast][data-type="success"]::before {
+  content: "✅" !important;
+  margin-right: 8px !important;
+  font-size: 16px !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"]::before {
+  content: "!" !important;
+  margin-right: 8px !important;
+  font-size: 16px !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="info"]::before {
+  content: "i" !important;
+  margin-right: 8px !important;
+  font-size: 16px !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"]::before {
+  content: "!" !important;
+  margin-right: 8px !important;
+  font-size: 16px !important;
+}
+
+/* Boton de cierre personalizado con texto */
+[data-sonner-toaster] [data-close-button]::after {
+  content: "x" !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  color: #666 !important;
+  font-weight: bold !important;
+}

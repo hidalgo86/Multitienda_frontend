@@ -1,8 +1,10 @@
 import {
-  COOKIE_SESSION_MARKER,
-  getStoredAuthToken,
-  refreshSession,
-} from "@/services/users";
+  buildApiUrl,
+  buildAuthHeaders,
+  fetchWithAuthRetry,
+  parseResponseOrThrow,
+  type ApiRequestOptions,
+} from "@/lib/apiClient";
 import type {
   BusinessColorPalette,
   BusinessSettings,
@@ -10,12 +12,7 @@ import type {
 } from "@/types/domain/business-settings";
 import { defaultBrandPalette } from "@/lib/brandPalettes";
 
-interface ApiOptions {
-  baseUrl?: string;
-  cache?: RequestCache;
-  signal?: AbortSignal;
-  token?: string | null;
-}
+type ApiOptions = ApiRequestOptions;
 
 type RawBusinessSettings = Partial<BusinessSettings> & { _id?: string | null };
 export const defaultManualPaymentInstructions = [
@@ -33,43 +30,6 @@ export const defaultSeoDescription =
   "Compra productos seleccionados en nuestra tienda online.";
 export const defaultAboutText =
   "Conoce mas sobre nuestra tienda, productos y forma de atender cada compra.";
-
-class ApiResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiResponseError";
-  }
-}
-
-const buildApiUrl = (path: string, baseUrl?: string): string => {
-  if (!baseUrl) return path;
-  const normalizedBaseUrl = baseUrl.endsWith("/")
-    ? baseUrl.slice(0, -1)
-    : baseUrl;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBaseUrl}${normalizedPath}`;
-};
-
-const parseResponseOrThrow = async <T>(
-  response: Response,
-  fallbackErrorMessage: string,
-): Promise<T> => {
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new ApiResponseError(
-      typeof data?.error === "string" && data.error.trim()
-        ? data.error
-        : fallbackErrorMessage,
-      response.status,
-    );
-  }
-
-  return data as T;
-};
 
 const normalizeString = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
@@ -147,63 +107,6 @@ const normalizeColorPalette = (value: unknown): BusinessColorPalette => {
   };
 };
 
-const buildHeaders = (
-  includeJson: boolean = false,
-  token?: string | null,
-): HeadersInit => {
-  const headers: HeadersInit = {};
-  if (includeJson) headers["Content-Type"] = "application/json";
-  if (token && token !== COOKIE_SESSION_MARKER) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-};
-
-const storeRefreshedTokens = () => {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem("refreshToken");
-  window.dispatchEvent(new Event("auth:session-changed"));
-};
-
-const fetchWithAuthRetry = async <T>(
-  requestFactory: (token: string) => Promise<T>,
-  fallbackErrorMessage: string,
-  options: ApiOptions = {},
-): Promise<T> => {
-  const token = options.token ?? getStoredAuthToken();
-
-  if (!token) {
-    throw new Error("No hay sesion activa");
-  }
-
-  try {
-    return await requestFactory(token);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message.toLowerCase()
-        : fallbackErrorMessage.toLowerCase();
-    const status = error instanceof ApiResponseError ? error.status : null;
-    const canRefreshSession =
-      !options.token || options.token === COOKIE_SESSION_MARKER;
-    const shouldRetry =
-      canRefreshSession &&
-      (status === 401 ||
-        message.includes("token") ||
-        message.includes("jwt") ||
-        message.includes("unauthorized") ||
-        message.includes("sesion"));
-
-    if (!shouldRetry) {
-      throw error;
-    }
-
-    const refreshedTokens = await refreshSession();
-    storeRefreshedTokens();
-    return requestFactory(refreshedTokens.access_token);
-  }
-};
-
 export const getBusinessSettings = async (
   options: ApiOptions = {},
 ): Promise<BusinessSettings> => {
@@ -228,7 +131,7 @@ export const getAdminBusinessSettings = async (
       buildApiUrl("/api/admin/settings", options.baseUrl),
       {
         cache: options.cache ?? "no-store",
-        headers: buildHeaders(false, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token),
         signal: options.signal,
       },
     );
@@ -250,7 +153,7 @@ export const updateBusinessSettings = async (
       buildApiUrl("/api/admin/settings", options.baseUrl),
       {
         method: "PATCH",
-        headers: buildHeaders(true, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token, true),
         body: JSON.stringify(input),
         signal: options.signal,
       },

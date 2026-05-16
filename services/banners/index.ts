@@ -1,8 +1,10 @@
 import {
-  COOKIE_SESSION_MARKER,
-  getStoredAuthToken,
-  refreshSession,
-} from "@/services/users";
+  buildApiUrl,
+  buildAuthHeaders,
+  fetchWithAuthRetry,
+  parseResponseOrThrow,
+  type ApiRequestOptions,
+} from "@/lib/apiClient";
 import type {
   Banner,
   CreateBannerInput,
@@ -14,12 +16,7 @@ import {
   uploadCloudinaryImage,
 } from "@/services/cloudinary-images";
 
-interface ApiOptions {
-  baseUrl?: string;
-  cache?: RequestCache;
-  signal?: AbortSignal;
-  token?: string | null;
-}
+type ApiOptions = ApiRequestOptions;
 
 type RawBanner = Partial<Banner> & { _id?: string | null };
 const BANNER_PLACEHOLDER = "/placeholder.webp";
@@ -49,43 +46,6 @@ const normalizeIdentifier = (value: unknown): string => {
   return normalizedValue;
 };
 
-const buildApiUrl = (path: string, baseUrl?: string): string => {
-  if (!baseUrl) return path;
-  const normalizedBaseUrl = baseUrl.endsWith("/")
-    ? baseUrl.slice(0, -1)
-    : baseUrl;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBaseUrl}${normalizedPath}`;
-};
-
-const parseResponseOrThrow = async <T>(
-  response: Response,
-  fallbackErrorMessage: string,
-): Promise<T> => {
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    throw new ApiResponseError(
-      typeof data?.error === "string" && data.error.trim()
-        ? data.error
-        : fallbackErrorMessage,
-      response.status,
-    );
-  }
-
-  return data as T;
-};
-
-class ApiResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiResponseError";
-  }
-}
-
 const normalizeBanner = (raw: RawBanner): Banner => ({
   id: normalizeIdentifier(raw.id) || normalizeIdentifier(raw._id),
   title: String(raw.title ?? ""),
@@ -108,65 +68,6 @@ const normalizeBannerList = (value: unknown): Banner[] =>
   Array.isArray(value)
     ? value.map((item) => normalizeBanner((item ?? {}) as RawBanner))
     : [];
-
-const buildHeaders = (
-  includeJson: boolean = false,
-  token?: string | null,
-): HeadersInit => {
-  const headers: HeadersInit = {};
-  if (includeJson) headers["Content-Type"] = "application/json";
-  if (token && token !== COOKIE_SESSION_MARKER) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-};
-
-const storeRefreshedTokens = () => {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem("refreshToken");
-  window.dispatchEvent(new Event("auth:session-changed"));
-};
-
-const fetchWithAuthRetry = async <T>(
-  requestFactory: (token: string) => Promise<T>,
-  fallbackErrorMessage: string,
-  options: ApiOptions = {},
-): Promise<T> => {
-  const token = options.token ?? getStoredAuthToken();
-
-  if (!token) {
-    throw new Error("No hay sesion activa");
-  }
-
-  try {
-    return await requestFactory(token);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message.toLowerCase()
-        : fallbackErrorMessage.toLowerCase();
-    const status = error instanceof ApiResponseError ? error.status : null;
-
-    const canRefreshSession =
-      !options.token || options.token === COOKIE_SESSION_MARKER;
-
-    const shouldRetry =
-      canRefreshSession &&
-      (status === 401 ||
-        message.includes("token") ||
-        message.includes("jwt") ||
-        message.includes("unauthorized") ||
-        message.includes("sesion"));
-
-    if (!shouldRetry) {
-      throw error;
-    }
-
-    const refreshedTokens = await refreshSession();
-    storeRefreshedTokens();
-    return requestFactory(refreshedTokens.access_token);
-  }
-};
 
 export const listPublicBanners = async (
   options: ApiOptions = {},
@@ -192,7 +93,7 @@ export const listAdminBanners = async (
       buildApiUrl("/api/admin/banners", options.baseUrl),
       {
         cache: options.cache ?? "no-store",
-        headers: buildHeaders(false, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token),
         signal: options.signal,
       },
     );
@@ -214,7 +115,7 @@ export const createBanner = async (
       buildApiUrl("/api/admin/banners", options.baseUrl),
       {
         method: "POST",
-        headers: buildHeaders(true, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token, true),
         body: JSON.stringify(input),
         signal: options.signal,
       },
@@ -244,7 +145,7 @@ export const updateBanner = async (
       buildApiUrl(`/api/admin/banners/${normalizedId}`, options.baseUrl),
       {
         method: "PATCH",
-        headers: buildHeaders(true, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token, true),
         body: JSON.stringify(input),
         signal: options.signal,
       },
@@ -273,7 +174,7 @@ export const deleteBanner = async (
       buildApiUrl(`/api/admin/banners/${normalizedId}`, options.baseUrl),
       {
         method: "DELETE",
-        headers: buildHeaders(false, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token),
         signal: options.signal,
       },
     );

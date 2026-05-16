@@ -7,191 +7,24 @@ import type {
   UploadProduct,
 } from "@/types/domain/products";
 import {
-  COOKIE_SESSION_MARKER,
-  getStoredAuthToken,
-  refreshSession,
-} from "@/services/users";
+  buildApiUrl,
+  buildAuthHeaders,
+  fetchWithAuthRetry,
+  parseResponseOrThrow,
+  type ApiRequestOptions,
+} from "@/lib/apiClient";
 import {
   deleteCloudinaryImage,
   uploadCloudinaryImage,
 } from "@/services/cloudinary-images";
 
-interface ApiOptions {
-  baseUrl?: string;
-  cache?: RequestCache;
-  signal?: AbortSignal;
-  token?: string | null;
+interface ProductApiOptions extends ApiRequestOptions {
   trackView?: boolean;
 }
 
-const genericErrorMessages = new Set([
-  "bad request exception",
-  "bad request",
-  "internal server error",
-  "error backend",
-  "error del backend",
-]);
-
-const isGenericErrorMessage = (value: string): boolean =>
-  genericErrorMessages.has(value.trim().toLowerCase());
-
-const extractErrorMessage = (
-  value: unknown,
-  fallbackErrorMessage: string,
-): string => {
-  if (typeof value === "string") {
-    const trimmedValue = value.trim();
-    return trimmedValue || fallbackErrorMessage;
-  }
-
-  if (Array.isArray(value)) {
-    const messages = value
-      .map((item) => extractErrorMessage(item, ""))
-      .filter(Boolean);
-
-    return messages.join(". ") || fallbackErrorMessage;
-  }
-
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-
-    const nestedMessage = [
-      record.originalError,
-      record.extensions,
-      record.exception,
-      record.response,
-    ]
-      .map((item) => extractErrorMessage(item, ""))
-      .find(Boolean);
-
-    if (typeof record.message === "string" && record.message.trim()) {
-      const message = record.message.trim();
-      if (!isGenericErrorMessage(message) || !nestedMessage) {
-        return message;
-      }
-    }
-
-    if (typeof record.error === "string" && record.error.trim()) {
-      const errorMessage = record.error.trim();
-      if (!isGenericErrorMessage(errorMessage) || !nestedMessage) {
-        return errorMessage;
-      }
-    }
-
-    if (nestedMessage) {
-      return nestedMessage;
-    }
-  }
-
-  return fallbackErrorMessage;
-};
-
-const buildApiUrl = (path: string, baseUrl?: string): string => {
-  if (!baseUrl) return path;
-  const normalizedBaseUrl = baseUrl.endsWith("/")
-    ? baseUrl.slice(0, -1)
-    : baseUrl;
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBaseUrl}${normalizedPath}`;
-};
-
-const parseResponseOrThrow = async <T>(
-  response: Response,
-  fallbackErrorMessage: string,
-): Promise<T> => {
-  const data = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message = extractErrorMessage(
-      data && (data.error || data.message),
-      fallbackErrorMessage,
-    );
-    throw new ApiResponseError(message, response.status);
-  }
-
-  return data as T;
-};
-
-class ApiResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiResponseError";
-  }
-}
-
-const buildHeaders = (
-  options: ApiOptions,
-  includeJson: boolean = false,
-  token?: string | null,
-): HeadersInit => {
-  const headers: HeadersInit = {};
-
-  if (includeJson) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  if (token && token !== COOKIE_SESSION_MARKER) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
-};
-
-const storeRefreshedTokens = () => {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem("refreshToken");
-  window.dispatchEvent(new Event("auth:session-changed"));
-};
-
-const fetchWithAuthRetry = async <T>(
-  requestFactory: (token: string) => Promise<T>,
-  fallbackErrorMessage: string,
-  options: ApiOptions = {},
-): Promise<T> => {
-  const token = options.token ?? getStoredAuthToken();
-
-  if (!token) {
-    throw new Error("No hay sesion activa");
-  }
-
-  try {
-    return await requestFactory(token);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message.toLowerCase()
-        : fallbackErrorMessage.toLowerCase();
-    const status = error instanceof ApiResponseError ? error.status : null;
-
-    const canRefreshSession =
-      !options.token || options.token === COOKIE_SESSION_MARKER;
-
-    const shouldRetry =
-      canRefreshSession &&
-      (status === 401 ||
-        message.includes("token") ||
-        message.includes("jwt") ||
-        message.includes("unauthorized") ||
-        message.includes("unauthoriz") ||
-        message.includes("sesion"));
-
-    if (!shouldRetry) {
-      throw error;
-    }
-
-    const refreshedTokens = await refreshSession();
-    storeRefreshedTokens();
-
-    return requestFactory(refreshedTokens.access_token);
-  }
-};
-
 export const listProducts = async (
   params: ProductSearchFilters = {},
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<PaginatedProducts> => {
   const query = new URLSearchParams();
 
@@ -237,7 +70,7 @@ export const listProducts = async (
 
 export const getProductById = async (
   id: string,
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<Product> => {
   const response = await fetch(
     buildApiUrl(
@@ -248,7 +81,7 @@ export const getProductById = async (
     ),
     {
       cache: options.cache ?? "no-store",
-      headers: buildHeaders(options, false, options.token),
+      headers: buildAuthHeaders(options.token),
       signal: options.signal,
     },
   );
@@ -258,14 +91,14 @@ export const getProductById = async (
 
 export const createProduct = async (
   input: CreateProduct,
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<Product> => {
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch(
       buildApiUrl("/api/products/create", options.baseUrl),
       {
         method: "POST",
-        headers: buildHeaders(options, true, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token, true),
         body: JSON.stringify(input),
         signal: options.signal,
       },
@@ -277,18 +110,18 @@ export const createProduct = async (
 
 export const uploadProductImage = async (
   file: File,
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<ProductImage> => uploadCloudinaryImage(file, "products", options);
 
 export const deleteProductImage = async (
   publicId: string,
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<void> => deleteCloudinaryImage(publicId, options);
 
 export const updateProduct = async (
   id: string,
   input: Partial<UploadProduct>,
-  options: ApiOptions = {},
+  options: ProductApiOptions = {},
 ): Promise<Product> => {
   const payload: UploadProduct = {
     ...(input as UploadProduct),
@@ -300,7 +133,7 @@ export const updateProduct = async (
       buildApiUrl(`/api/products/update/${id}`, options.baseUrl),
       {
         method: "PATCH",
-        headers: buildHeaders(options, true, options.token ?? token),
+        headers: buildAuthHeaders(options.token ?? token, true),
         body: JSON.stringify(payload),
         signal: options.signal,
       },

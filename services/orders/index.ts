@@ -1,10 +1,11 @@
-import type { Order, OrderItem, ShippingAddress } from "@/types/domain/orders";
 import {
-  COOKIE_SESSION_MARKER,
-  getStoredAuthToken,
-  refreshSession,
-  type PaginatedResult,
-} from "@/services/users";
+  buildAuthHeaders,
+  buildJsonHeaders,
+  fetchWithAuthRetry,
+  parseResponseOrThrow,
+} from "@/lib/apiClient";
+import type { Order, OrderItem, ShippingAddress } from "@/types/domain/orders";
+import { type PaginatedResult } from "@/services/users";
 
 interface OrderApiOptions {
   token?: string | null;
@@ -113,58 +114,6 @@ const compressPaymentProofImage = async (file: File): Promise<File> => {
   }
 };
 
-const buildHeaders = (token?: string | null): HeadersInit => {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  if (token && token !== COOKIE_SESSION_MARKER) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
-};
-
-const storeRefreshedTokens = () => {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem("refreshToken");
-  window.dispatchEvent(new Event("auth:session-changed"));
-};
-
-const parseResponseOrThrow = async <T>(response: Response): Promise<T> => {
-  const data = (await response.json().catch(() => null)) as
-    | T
-    | { error?: string }
-    | null;
-
-  function hasError(obj: unknown): obj is { error: string } {
-    return (
-      typeof obj === "object" &&
-      obj !== null &&
-      "error" in obj &&
-      typeof (obj as { error?: unknown }).error === "string"
-    );
-  }
-  if (!response.ok) {
-    const errorMsg = hasError(data)
-      ? data.error
-      : "No se pudo completar la compra";
-    throw new ApiResponseError(errorMsg, response.status);
-  }
-
-  return data as T;
-};
-
-class ApiResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiResponseError";
-  }
-}
-
 const asRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
@@ -263,44 +212,6 @@ const normalizeOrder = (value: unknown): Order => {
 const normalizeOrders = (value: unknown): Order[] =>
   Array.isArray(value) ? value.map(normalizeOrder) : [];
 
-const fetchWithAuthRetry = async <T>(
-  requestFactory: (token: string) => Promise<T>,
-  options: OrderApiOptions = {},
-): Promise<T> => {
-  const token = options.token ?? getStoredAuthToken();
-
-  if (!token) {
-    throw new Error("No hay sesion activa");
-  }
-
-  try {
-    return await requestFactory(token);
-  } catch (error) {
-    const message = error instanceof Error ? error.message.toLowerCase() : "";
-    const status = error instanceof ApiResponseError ? error.status : null;
-    const canRefreshSession =
-      !options.token || options.token === COOKIE_SESSION_MARKER;
-
-    const shouldRetry =
-      canRefreshSession &&
-      (status === 401 ||
-        message.includes("token") ||
-        message.includes("jwt") ||
-        message.includes("unauthorized") ||
-        message.includes("unauthoriz") ||
-        message.includes("sesion"));
-
-    if (!shouldRetry) {
-      throw error;
-    }
-
-    const refreshedTokens = await refreshSession();
-    storeRefreshedTokens();
-
-    return requestFactory(refreshedTokens.access_token);
-  }
-};
-
 export const checkoutCart = async (
   input: {
     deliveryMethod?: DeliveryMethod;
@@ -311,7 +222,7 @@ export const checkoutCart = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/orders/checkout", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({
         deliveryMethod: input.deliveryMethod ?? "pickup",
         paymentMethod: input.paymentMethod ?? "transfer",
@@ -319,9 +230,12 @@ export const checkoutCart = async (
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo completar la compra",
+    );
     return normalizeOrder(data);
-  }, options);
+  }, "No se pudo completar la compra", options);
 };
 
 export const listMyOrders = async (
@@ -329,14 +243,17 @@ export const listMyOrders = async (
 ): Promise<Order[]> => {
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/orders", {
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       cache: "no-store",
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudieron cargar los pedidos",
+    );
     return normalizeOrders(data);
-  }, options);
+  }, "No se pudieron cargar los pedidos", options);
 };
 
 export const getMyOrder = async (
@@ -345,14 +262,17 @@ export const getMyOrder = async (
 ): Promise<Order> => {
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, {
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       cache: "no-store",
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo cargar el pedido",
+    );
     return normalizeOrder(data);
-  }, options);
+  }, "No se pudo cargar el pedido", options);
 };
 
 export const payOrder = async (
@@ -362,14 +282,17 @@ export const payOrder = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/orders/pay", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({ orderId }),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo actualizar el pago",
+    );
     return normalizeOrder(data);
-  }, options);
+  }, "No se pudo actualizar el pago", options);
 };
 
 export const uploadPaymentProofImage = async (
@@ -377,7 +300,7 @@ export const uploadPaymentProofImage = async (
   file: File,
   options: OrderApiOptions = {},
 ): Promise<{ url: string; publicId: string }> => {
-  return fetchWithAuthRetry(async () => {
+  return fetchWithAuthRetry(async (token) => {
     const uploadFile = await compressPaymentProofImage(file);
     const formData = new FormData();
     formData.append("file", uploadFile);
@@ -386,12 +309,16 @@ export const uploadPaymentProofImage = async (
 
     const response = await fetch("/api/cloudinary/upload", {
       method: "POST",
+      headers: buildAuthHeaders(options.token ?? token),
       body: formData,
       signal: options.signal,
     });
 
-    return parseResponseOrThrow<{ url: string; publicId: string }>(response);
-  }, options);
+    return parseResponseOrThrow<{ url: string; publicId: string }>(
+      response,
+      "Error subiendo imagen",
+    );
+  }, "Error subiendo imagen", options);
 };
 
 export const submitPaymentProof = async (
@@ -406,14 +333,17 @@ export const submitPaymentProof = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/orders/payment-proof", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify(input),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo enviar el comprobante",
+    );
     return normalizeOrder(data);
-  }, options);
+  }, "No se pudo enviar el comprobante", options);
 };
 
 export const cancelOrder = async (
@@ -423,14 +353,17 @@ export const cancelOrder = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/orders/cancel", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({ orderId }),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo cancelar el pedido",
+    );
     return normalizeOrder(data);
-  }, options);
+  }, "No se pudo cancelar el pedido", options);
 };
 
 export interface AdminOrder extends Order {
@@ -470,12 +403,15 @@ export const listAdminOrders = async (
     if (params.status?.trim()) query.set("status", params.status.trim());
 
     const response = await fetch(`/api/admin/orders?${query.toString()}`, {
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       cache: "no-store",
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<PaginatedResult<unknown>>(response);
+    const data = await parseResponseOrThrow<PaginatedResult<unknown>>(
+      response,
+      "No se pudieron cargar los pedidos",
+    );
 
     return {
       items: Array.isArray(data.items)
@@ -485,7 +421,7 @@ export const listAdminOrders = async (
       page: Number(data.page ?? 1),
       totalPages: Number(data.totalPages ?? 1),
     };
-  }, options);
+  }, "No se pudieron cargar los pedidos", options);
 };
 
 export const adminPayOrder = async (
@@ -495,14 +431,17 @@ export const adminPayOrder = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/admin/orders/pay", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({ orderId }),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo marcar el pedido como pagado",
+    );
     return normalizeOrder(data) as AdminOrder;
-  }, options);
+  }, "No se pudo marcar el pedido como pagado", options);
 };
 
 export const adminUnpayOrder = async (
@@ -512,14 +451,17 @@ export const adminUnpayOrder = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/admin/orders/unpay", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({ orderId }),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo revertir el pago",
+    );
     return normalizeOrder(data) as AdminOrder;
-  }, options);
+  }, "No se pudo revertir el pago", options);
 };
 
 export const adminCancelOrder = async (
@@ -529,12 +471,15 @@ export const adminCancelOrder = async (
   return fetchWithAuthRetry(async (token) => {
     const response = await fetch("/api/admin/orders/cancel", {
       method: "POST",
-      headers: buildHeaders(token),
+      headers: buildJsonHeaders(token),
       body: JSON.stringify({ orderId }),
       signal: options.signal,
     });
 
-    const data = await parseResponseOrThrow<unknown>(response);
+    const data = await parseResponseOrThrow<unknown>(
+      response,
+      "No se pudo cancelar el pedido",
+    );
     return normalizeOrder(data) as AdminOrder;
-  }, options);
+  }, "No se pudo cancelar el pedido", options);
 };

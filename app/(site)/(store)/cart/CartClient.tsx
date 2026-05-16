@@ -1,19 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { MdDelete, MdDeleteSweep, MdAdd, MdRemove, MdShoppingBag } from "react-icons/md";
 import { useState } from "react";
 import { findVariantBySelection, formatVariantLabel } from "@/types/domain/products";
 import { useCartActions } from "@/lib/useCartActions";
 import { getStoredAuthToken, isStoredAdminUser } from "@/services/users";
-import {
-  PAYMENTS_ENABLED,
-  checkoutDisabledMessage,
-} from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImages";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import EmptyStateRecommendations from "@/components/products/EmptyStateRecommendations";
+import ProductImage from "@/components/products/ProductImage";
 import type { Product } from "@/types/domain/products";
 
 interface CartClientProps {
@@ -26,6 +23,7 @@ export default function CartClient({ popularProducts = [] }: CartClientProps) {
   const { items, totalItems, totalPrice } = cart;
   const [isClearing, setIsClearing] = useState(false);
   const [showClearConfirmation, setShowClearConfirmation] = useState(false);
+  const { paymentsEnabled, checkoutDisabledMessage } = useCommerceSettings();
   const isAuthenticated = Boolean(getStoredAuthToken());
   const isAdminUser = isStoredAdminUser();
 
@@ -183,7 +181,7 @@ export default function CartClient({ popularProducts = [] }: CartClientProps) {
                   >
                     <div className="flex flex-col sm:flex-row gap-4">
                       <div className="w-full sm:w-24 h-32 sm:h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        <Image
+                        <ProductImage
                           src={itemImage}
                           alt={item.name || "Producto"}
                           width={96}
@@ -310,7 +308,7 @@ export default function CartClient({ popularProducts = [] }: CartClientProps) {
                 </div>
 
                 <div className="space-y-3">
-                  {PAYMENTS_ENABLED ? (
+                  {paymentsEnabled ? (
                     <Link
                       href="/checkout"
                       className="w-full block text-center px-6 py-3 bg-brand-500 text-white rounded-lg hover:bg-brand-600 transition-colors font-medium"
@@ -333,7 +331,7 @@ export default function CartClient({ popularProducts = [] }: CartClientProps) {
                   >
                     Seguir comprando
                   </Link>
-                  {!PAYMENTS_ENABLED && (
+                  {!paymentsEnabled && (
                     <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 leading-relaxed">
                       {checkoutDisabledMessage}
                     </p>

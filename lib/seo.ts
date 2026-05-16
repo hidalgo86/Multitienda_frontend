@@ -29,6 +29,9 @@ export const getProductPrice = (product: Product): number | null => {
   return Number.isFinite(directPrice) && directPrice > 0 ? directPrice : null;
 };
 
-export const getProductDescription = (product: Product): string =>
+export const getProductDescription = (
+  product: Product,
+  businessName = "la tienda",
+): string =>
   product.description?.trim() ||
-  `${product.name} disponible en Chikitoslandia.`;
+  `${product.name} disponible en ${businessName}.`;

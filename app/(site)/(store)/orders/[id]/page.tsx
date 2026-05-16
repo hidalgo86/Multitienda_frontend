@@ -19,12 +19,7 @@ import {
 } from "@/services/orders";
 import { getStoredAuthToken } from "@/services/users";
 import type { Order } from "@/types/domain/orders";
-import {
-  PAYMENTS_ENABLED,
-  manualPaymentInstructions,
-  paymentsDisabledMessage,
-  pickupMessage,
-} from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const formatCurrency = (value: number): string =>
@@ -62,6 +57,12 @@ const isCashPickupOrder = (order: Order): boolean =>
 export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const {
+    paymentsEnabled,
+    manualPaymentInstructions,
+    paymentsDisabledMessage,
+    pickupMessage,
+  } = useCommerceSettings();
   const orderId = String(params?.id ?? "").trim();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,7 +102,7 @@ export default function OrderDetailPage() {
     event.preventDefault();
     if (!order || isUpdating) return;
 
-    if (!PAYMENTS_ENABLED) {
+    if (!paymentsEnabled) {
       toast.error(paymentsDisabledMessage);
       return;
     }
@@ -316,13 +317,13 @@ export default function OrderDetailPage() {
             />
             <button
               type="submit"
-              disabled={isUpdating || !PAYMENTS_ENABLED}
+              disabled={isUpdating || !paymentsEnabled}
               className="inline-flex items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <MdUploadFile size={18} />
               {isUpdating ? "Cargando..." : "Subir comprobante"}
             </button>
-            {!PAYMENTS_ENABLED && (
+            {!paymentsEnabled && (
               <p className="text-sm text-amber-700 md:col-span-3">
                 {paymentsDisabledMessage}
               </p>

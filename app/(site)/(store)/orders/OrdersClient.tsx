@@ -14,11 +14,7 @@ import {
 import { cancelOrder, listMyOrders } from "@/services/orders";
 import { getStoredAuthToken } from "@/services/users";
 import type { Order } from "@/types/domain/orders";
-import {
-  PAYMENTS_ENABLED,
-  paymentsDisabledMessage,
-  pickupMessage,
-} from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import ConfirmDialog from "@/components/ConfirmDialog";
 
 const formatCurrency = (value: number): string =>
@@ -64,6 +60,8 @@ type OrderStatusFilter = (typeof orderStatusFilters)[number]["value"];
 
 export default function OrdersClient() {
   const router = useRouter();
+  const { paymentsEnabled, paymentsDisabledMessage, pickupMessage } =
+    useCommerceSettings();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
@@ -314,7 +312,7 @@ export default function OrdersClient() {
                     {isPending &&
                       !isCashPickupOrder(order) &&
                       !order.paymentProofUrl &&
-                      PAYMENTS_ENABLED && (
+                      paymentsEnabled && (
                       <Link
                         href={`/orders/${order.id}`}
                         className="inline-flex w-full items-center justify-center rounded-md border border-green-300 bg-white px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50 sm:w-auto"
@@ -344,7 +342,7 @@ export default function OrdersClient() {
                   ) : (
                     <p className="mt-3 text-xs text-gray-500">{pickupMessage}</p>
                   )}
-                  {isPending && !PAYMENTS_ENABLED && (
+                  {isPending && !paymentsEnabled && (
                     <p className="mt-3 text-sm text-amber-700">
                       {paymentsDisabledMessage}
                     </p>

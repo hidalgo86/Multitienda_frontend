@@ -17,12 +17,11 @@ import {
 } from "@/services/users";
 import {
   MdAssignment,
-  MdCategory,
   MdGroups,
   MdInventory2,
   MdLogout,
   MdManageSearch,
-  MdViewCarousel,
+  MdSettings,
 } from "react-icons/md";
 
 const isAdminRole = (role?: string | null): boolean =>
@@ -51,18 +50,12 @@ function DashboardLayoutContent({
   const hasShownSessionExpiredRef = React.useRef(false);
   const isRedirectingRef = React.useRef(false);
 
-  const sidebarItems: SidebarItem[] = [
+  const dashboardItems: SidebarItem[] = [
     {
       alt: "products",
       label: "Productos",
       href: "/dashboard/products",
       Icon: MdInventory2,
-    },
-    {
-      alt: "categories",
-      label: "Categorias",
-      href: "/dashboard/categories",
-      Icon: MdCategory,
     },
     {
       alt: "clients",
@@ -77,17 +70,20 @@ function DashboardLayoutContent({
       Icon: MdAssignment,
     },
     {
-      alt: "banners",
-      label: "Carrusel",
-      href: "/dashboard/banners",
-      Icon: MdViewCarousel,
-    },
-    {
       alt: "audit",
       label: "Auditorias",
       href: "/dashboard/audit",
       Icon: MdManageSearch,
     },
+    {
+      alt: "settings",
+      label: "Negocio",
+      href: "/dashboard/settings",
+      Icon: MdSettings,
+    },
+  ];
+  const mobileSidebarItems: SidebarItem[] = [
+    ...dashboardItems,
     {
       alt: "exit",
       label: "Salir",
@@ -97,11 +93,10 @@ function DashboardLayoutContent({
   ];
 
   const activeOption = React.useMemo(() => {
-    if (pathname.includes("/dashboard/categories")) return "categories";
     if (pathname.includes("/dashboard/clients")) return "clients";
     if (pathname.includes("/dashboard/orders")) return "orders";
-    if (pathname.includes("/dashboard/banners")) return "banners";
     if (pathname.includes("/dashboard/audit")) return "audit";
+    if (pathname.includes("/dashboard/settings")) return "settings";
     return "products";
   }, [pathname]);
 
@@ -223,12 +218,12 @@ function DashboardLayoutContent({
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <div className="flex flex-1 w-full min-w-0">
-        <SidebarDesktop items={sidebarItems} activeOption={activeOption} />
+        <SidebarDesktop items={dashboardItems} activeOption={activeOption} />
         <main className="min-w-0 flex-1 bg-white px-3 py-4 pb-20 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 lg:py-8 lg:pb-8">
           {children}
         </main>
       </div>
-      <SidebarMobile items={sidebarItems} activeOption={activeOption} />
+      <SidebarMobile items={mobileSidebarItems} activeOption={activeOption} />
     </div>
   );
 }

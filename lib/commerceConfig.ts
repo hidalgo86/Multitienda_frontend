@@ -1,22 +1,47 @@
-export const PAYMENTS_ENABLED = true;
+import type { BusinessSettings } from "@/types/domain/business-settings";
+import {
+  defaultCheckoutDisabledMessage,
+  defaultDeliveryDisabledMessage,
+  defaultManualPaymentInstructions,
+} from "@/services/business-settings";
 
-export const paymentsDisabledMessage =
-  "Las compras estan temporalmente deshabilitadas mientras integramos la pasarela de pago.";
+export interface CommerceSettings {
+  paymentsEnabled: boolean;
+  checkoutDisabledMessage: string;
+  paymentsDisabledMessage: string;
+  storePickupAddress: string;
+  pickupMessage: string;
+  deliveryEnabled: boolean;
+  deliveryDisabledMessage: string;
+  manualPaymentInstructions: string[];
+}
 
-export const checkoutDisabledMessage =
-  "Ya puedes explorar la tienda, guardar favoritos y usar el carrito. La compra estara disponible cuando activemos los pagos.";
+export const defaultCommerceSettings: CommerceSettings = {
+  paymentsEnabled: true,
+  checkoutDisabledMessage: defaultCheckoutDisabledMessage,
+  paymentsDisabledMessage: defaultCheckoutDisabledMessage,
+  storePickupAddress: "",
+  pickupMessage: "Retiro en tienda disponible.",
+  deliveryEnabled: false,
+  deliveryDisabledMessage: defaultDeliveryDisabledMessage,
+  manualPaymentInstructions: defaultManualPaymentInstructions,
+};
 
-export const storePickupAddress =
-  "Calle Pagallos, Guiria, Estado Sucre, frente a los chinos Fabiola.";
+export const getCommerceSettingsFromBusiness = (
+  settings?: BusinessSettings | null,
+): CommerceSettings => {
+  if (!settings) return defaultCommerceSettings;
 
-export const pickupMessage =
-  `Retiro en tienda: ${storePickupAddress} No se realizan envios por el momento.`;
-
-export const deliveryDisabledMessage =
-  "El envio a domicilio estara disponible proximamente.";
-
-export const manualPaymentInstructions = [
-  "Realiza el pago por transferencia o deposito a la cuenta indicada por la tienda.",
-  "Luego carga el comprobante y el numero de operacion en tu pedido.",
-  "El pedido quedara en espera hasta que administracion confirme que el pago entro en la cuenta.",
-];
+  return {
+    paymentsEnabled: settings.paymentsEnabled,
+    checkoutDisabledMessage: settings.checkoutDisabledMessage,
+    paymentsDisabledMessage: settings.checkoutDisabledMessage,
+    storePickupAddress: settings.storePickupAddress || settings.address,
+    pickupMessage: settings.pickupMessage,
+    deliveryEnabled: settings.deliveryEnabled,
+    deliveryDisabledMessage: settings.deliveryDisabledMessage,
+    manualPaymentInstructions: settings.manualPaymentInstructions.length
+      ? settings.manualPaymentInstructions
+      : defaultManualPaymentInstructions,
+  };
+};

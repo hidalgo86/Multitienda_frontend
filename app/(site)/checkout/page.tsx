@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { MdCheckCircle, MdLocationOn, MdShoppingCart } from "react-icons/md";
@@ -13,14 +12,7 @@ import {
   submitPaymentProof,
   uploadPaymentProofImage,
 } from "@/services/orders";
-import {
-  PAYMENTS_ENABLED,
-  checkoutDisabledMessage,
-  deliveryDisabledMessage,
-  manualPaymentInstructions,
-  pickupMessage,
-  storePickupAddress,
-} from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import {
   getCurrentUser,
   getStoredAuthToken,
@@ -37,9 +29,16 @@ const formatCurrency = (value: number) =>
   }).format(value);
 
 export default function CheckoutPage() {
-  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { cart } = useCartActions();
+  const {
+    paymentsEnabled,
+    checkoutDisabledMessage,
+    deliveryDisabledMessage,
+    manualPaymentInstructions,
+    pickupMessage,
+    storePickupAddress,
+  } = useCommerceSettings();
   const [user, setUser] = useState<User | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,7 +57,7 @@ export default function CheckoutPage() {
     useSubmitCooldown(5);
 
   useEffect(() => {
-    if (!PAYMENTS_ENABLED) {
+    if (!paymentsEnabled) {
       setIsLoadingUser(false);
       return;
     }
@@ -88,7 +87,7 @@ export default function CheckoutPage() {
     };
 
     void loadUser();
-  }, [router]);
+  }, [paymentsEnabled]);
 
   const hasVerifiedEmail = Boolean(user?.isEmailVerified);
   const hasCompleteShippingProfile = Boolean(
@@ -122,7 +121,7 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (isSubmitting || isCoolingDown) return;
 
-    if (!PAYMENTS_ENABLED) {
+    if (!paymentsEnabled) {
       toast.error(checkoutDisabledMessage);
       return;
     }
@@ -201,7 +200,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!PAYMENTS_ENABLED) {
+  if (!paymentsEnabled) {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-12">

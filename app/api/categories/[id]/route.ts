@@ -32,6 +32,11 @@ export async function PATCH(
       name?: string;
       slug?: string;
       parentId?: string | null;
+      description?: string;
+      imageUrl?: string;
+      imagePublicId?: string | null;
+      isFeatured?: boolean;
+      displayOrder?: number;
     };
 
     const input = {
@@ -43,6 +48,26 @@ export async function PATCH(
         : {}),
       ...(typeof body.parentId === "string" && body.parentId.trim()
         ? { parentId: body.parentId.trim() }
+        : {}),
+      ...(typeof body.description === "string"
+        ? { description: body.description.trim() }
+        : {}),
+      ...(typeof body.imageUrl === "string"
+        ? { imageUrl: body.imageUrl.trim() }
+        : {}),
+      ...(body.imagePublicId !== undefined
+        ? {
+            imagePublicId:
+              typeof body.imagePublicId === "string"
+                ? body.imagePublicId.trim()
+                : null,
+          }
+        : {}),
+      ...(typeof body.isFeatured === "boolean"
+        ? { isFeatured: body.isFeatured }
+        : {}),
+      ...(Number.isFinite(Number(body.displayOrder))
+        ? { displayOrder: Math.max(0, Math.trunc(Number(body.displayOrder))) }
         : {}),
     };
 

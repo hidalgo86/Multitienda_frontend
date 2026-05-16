@@ -4,6 +4,10 @@ import {
   getStoredAuthToken,
   refreshSession,
 } from "@/services/users";
+import {
+  deleteCloudinaryImage,
+  uploadCloudinaryImage,
+} from "@/services/cloudinary-images";
 
 interface ApiOptions {
   baseUrl?: string;
@@ -16,6 +20,11 @@ export interface CategoryInput {
   name: string;
   slug: string;
   parentId?: string;
+  description?: string;
+  imageUrl?: string;
+  imagePublicId?: string | null;
+  isFeatured?: boolean;
+  displayOrder?: number;
 }
 
 const buildApiUrl = (path: string, baseUrl?: string): string => {
@@ -63,10 +72,10 @@ const buildHeaders = (options: ApiOptions, includeJson = false): HeadersInit => 
   return headers;
 };
 
-const parseCategoryResponse = async (
+const parseCategoryResponse = async <T = Category>(
   response: Response,
   fallbackMessage: string,
-): Promise<Category> => {
+): Promise<T> => {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
@@ -78,7 +87,7 @@ const parseCategoryResponse = async (
     );
   }
 
-  return data as Category;
+  return data as T;
 };
 
 class ApiResponseError extends Error {
@@ -188,3 +197,14 @@ export const deleteCategory = async (
     return parseCategoryResponse(response, "Error al eliminar categoria");
   }, options);
 };
+
+export const uploadCategoryImage = async (
+  file: File,
+  options: ApiOptions = {},
+): Promise<{ url: string; publicId: string }> =>
+  uploadCloudinaryImage(file, "categories", options);
+
+export const deleteCategoryImage = async (
+  publicId: string,
+  options: ApiOptions = {},
+): Promise<void> => deleteCloudinaryImage(publicId, options);

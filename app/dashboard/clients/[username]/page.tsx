@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MdArrowBack } from "react-icons/md";
 import { listAdminUsers } from "@/services/users";
 import type { User } from "@/types/domain/users";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const formatDate = (value?: string | null): string => {
   if (!value) return "Sin fecha";
@@ -41,7 +42,7 @@ export default function DashboardClientDetailPage() {
       try {
         const response = await listAdminUsers({
           username,
-          limit: 20,
+          limit: paginationConfig.adminUsersLimit,
           page: 1,
         });
 

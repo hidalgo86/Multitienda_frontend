@@ -6,6 +6,7 @@ const ProductListPublic: React.FC<ProductListPublicProps> = ({
   products,
   onAddToCart,
   onFavorite,
+  priorityFirstImage = true,
 }) => {
   if (!products || products.length === 0) {
     return (
@@ -16,12 +17,13 @@ const ProductListPublic: React.FC<ProductListPublicProps> = ({
   }
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
+      {products.map((product, index) => (
         <ProductCardPublic
           key={product.id}
           product={product}
           onAddToCart={onAddToCart}
           onFavorite={onFavorite}
+          imagePriority={priorityFirstImage && index === 0}
         />
       ))}
     </div>

@@ -11,6 +11,10 @@ import {
   getStoredAuthToken,
   refreshSession,
 } from "@/services/users";
+import {
+  deleteCloudinaryImage,
+  uploadCloudinaryImage,
+} from "@/services/cloudinary-images";
 
 interface ApiOptions {
   baseUrl?: string;
@@ -274,46 +278,12 @@ export const createProduct = async (
 export const uploadProductImage = async (
   file: File,
   options: ApiOptions = {},
-): Promise<ProductImage> => {
-  return fetchWithAuthRetry(async () => {
-    const uploadFormData = new FormData();
-    uploadFormData.append("file", file);
-    uploadFormData.append("folder", "products");
-
-    const response = await fetch(
-      buildApiUrl("/api/cloudinary/upload", options.baseUrl),
-      {
-        method: "POST",
-        body: uploadFormData,
-        signal: options.signal,
-      },
-    );
-
-    return parseResponseOrThrow<ProductImage>(response, "Error subiendo imagen");
-  }, "Error subiendo imagen", options);
-};
+): Promise<ProductImage> => uploadCloudinaryImage(file, "products", options);
 
 export const deleteProductImage = async (
   publicId: string,
   options: ApiOptions = {},
-): Promise<void> => {
-  return fetchWithAuthRetry(async () => {
-    const response = await fetch(
-      buildApiUrl("/api/cloudinary/upload", options.baseUrl),
-      {
-        method: "DELETE",
-        headers: buildHeaders(options, true),
-        body: JSON.stringify({ publicId }),
-        signal: options.signal,
-      },
-    );
-
-    await parseResponseOrThrow<{ success: boolean }>(
-      response,
-      "Error eliminando imagen",
-    );
-  }, "Error eliminando imagen", options);
-};
+): Promise<void> => deleteCloudinaryImage(publicId, options);
 
 export const updateProduct = async (
   id: string,

@@ -18,6 +18,7 @@ import { MdChevronRight, MdFilterList, MdWarningAmber } from "react-icons/md";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const formatCurrency = (value: number): string =>
   new Intl.NumberFormat("es-ES", {
@@ -155,7 +156,7 @@ export default function DashboardOrdersPage() {
 
       const response = await listAdminOrders({
         page,
-        limit: 12,
+        limit: paginationConfig.adminOrdersLimit,
         status: status || undefined,
       });
       setOrdersPage(normalizeOrdersPage(response));

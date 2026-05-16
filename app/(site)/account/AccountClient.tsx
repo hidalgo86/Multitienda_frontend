@@ -22,7 +22,7 @@ import {
   updateStoredUser,
 } from "@/services/users";
 import { listMyOrders } from "@/services/orders";
-import { PAYMENTS_ENABLED } from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import type { User } from "@/types/domain/users";
 import type {
   AccountProfileFormState,
@@ -61,6 +61,7 @@ export default function AccountClient() {
   const router = useRouter();
   const storedUser = getStoredUser();
   const isAdminUser = isAdminRole(storedUser?.role);
+  const { paymentsEnabled } = useCommerceSettings();
   const [isLoading, setIsLoading] = useState(true);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<User | null>(null);
@@ -110,7 +111,7 @@ export default function AccountClient() {
         const adminUser = isAdminRole(user.role);
 
         const orderList =
-          adminUser || !PAYMENTS_ENABLED ? [] : await listMyOrders();
+          adminUser || !paymentsEnabled ? [] : await listMyOrders();
         const safeOrderList = Array.isArray(orderList) ? orderList : [];
 
         setUserInfo(user);
@@ -140,10 +141,10 @@ export default function AccountClient() {
     };
 
     void loadUserAndOrders();
-  }, [router]);
+  }, [paymentsEnabled, router]);
 
   const refreshOrders = async () => {
-    if (!PAYMENTS_ENABLED) return;
+    if (!paymentsEnabled) return;
 
     if (!getStoredAuthToken()) return;
 
@@ -471,7 +472,7 @@ export default function AccountClient() {
               </div>
             </div>
 
-            {!isAdminUser && PAYMENTS_ENABLED && (
+            {!isAdminUser && paymentsEnabled && (
               <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
                   <MdReceiptLong className="text-brand-700" size={20} />

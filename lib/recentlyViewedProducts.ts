@@ -2,7 +2,7 @@
 
 import type { Product } from "@/types/domain/products";
 
-const STORAGE_KEY = "chikitoslandia:recently-viewed";
+const STORAGE_KEY = "multitienda:recently-viewed";
 const MAX_ITEMS = 8;
 
 const canUseStorage = () =>

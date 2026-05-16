@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   formatSizeLabel,
@@ -7,6 +6,7 @@ import {
   getProductStock,
 } from "@/types/domain/products";
 import type { ProductListAdminProps } from "@/types/ui/products";
+import ProductImage from "@/components/products/ProductImage";
 
 const PLACEHOLDER = "/placeholder.webp";
 
@@ -109,7 +109,7 @@ const ProductListAdmin: React.FC<ProductListAdminProps> = ({
                   <td className="px-4 py-4">
                     <div className="flex min-w-[280px] items-center gap-3">
                       <div className="relative h-14 w-14 overflow-hidden rounded-xl bg-slate-100">
-                        <Image
+                        <ProductImage
                           src={imageSrc}
                           alt={product.name}
                           fill
@@ -236,7 +236,7 @@ const ProductListAdmin: React.FC<ProductListAdminProps> = ({
             <article key={product.id} className="space-y-4 p-4">
               <div className="flex items-start gap-3">
                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                  <Image
+                  <ProductImage
                     src={imageSrc}
                     alt={product.name}
                     fill

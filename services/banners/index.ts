@@ -8,6 +8,11 @@ import type {
   CreateBannerInput,
   UpdateBannerInput,
 } from "@/types/domain/banners";
+import { isAllowedRemoteImageUrl } from "@/lib/imageHosts";
+import {
+  deleteCloudinaryImage,
+  uploadCloudinaryImage,
+} from "@/services/cloudinary-images";
 
 interface ApiOptions {
   baseUrl?: string;
@@ -18,7 +23,6 @@ interface ApiOptions {
 
 type RawBanner = Partial<Banner> & { _id?: string | null };
 const BANNER_PLACEHOLDER = "/placeholder.webp";
-const ALLOWED_IMAGE_HOSTS = new Set(["res.cloudinary.com"]);
 
 const normalizeImageUrl = (value: unknown): string => {
   if (typeof value !== "string") return BANNER_PLACEHOLDER;
@@ -27,19 +31,7 @@ const normalizeImageUrl = (value: unknown): string => {
   if (!url) return BANNER_PLACEHOLDER;
   if (url.startsWith("/")) return url;
 
-  try {
-    const parsedUrl = new URL(url);
-    if (
-      parsedUrl.protocol === "https:" &&
-      ALLOWED_IMAGE_HOSTS.has(parsedUrl.hostname)
-    ) {
-      return url;
-    }
-  } catch {
-    return BANNER_PLACEHOLDER;
-  }
-
-  return BANNER_PLACEHOLDER;
+  return isAllowedRemoteImageUrl(url) ? url : BANNER_PLACEHOLDER;
 };
 
 const normalizeIdentifier = (value: unknown): string => {
@@ -297,24 +289,10 @@ export const deleteBanner = async (
 export const uploadBannerImage = async (
   file: File,
   options: ApiOptions = {},
-): Promise<{ url: string; publicId: string }> => {
-  return fetchWithAuthRetry(async () => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("folder", "banners");
+): Promise<{ url: string; publicId: string }> =>
+  uploadCloudinaryImage(file, "banners", options);
 
-    const response = await fetch(
-      buildApiUrl("/api/cloudinary/upload", options.baseUrl),
-      {
-        method: "POST",
-        body: formData,
-        signal: options.signal,
-      },
-    );
-
-    return parseResponseOrThrow<{ url: string; publicId: string }>(
-      response,
-      "Error al subir imagen del banner",
-    );
-  }, "Error al subir imagen del banner", options);
-};
+export const deleteBannerImage = async (
+  publicId: string,
+  options: ApiOptions = {},
+): Promise<void> => deleteCloudinaryImage(publicId, options);

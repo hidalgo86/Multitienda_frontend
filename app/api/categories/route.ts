@@ -20,12 +20,26 @@ export async function POST(req: NextRequest) {
       name?: string;
       slug?: string;
       parentId?: string;
+      description?: string;
+      imageUrl?: string;
+      imagePublicId?: string | null;
+      isFeatured?: boolean;
+      displayOrder?: number;
     };
 
     const input = {
       name: String(body.name ?? "").trim(),
       slug: String(body.slug ?? "").trim(),
       ...(body.parentId?.trim() ? { parentId: body.parentId.trim() } : {}),
+      description: String(body.description ?? "").trim(),
+      imageUrl: String(body.imageUrl ?? "").trim(),
+      imagePublicId: body.imagePublicId
+        ? String(body.imagePublicId).trim()
+        : null,
+      isFeatured: body.isFeatured === true,
+      displayOrder: Number.isFinite(Number(body.displayOrder))
+        ? Math.max(0, Math.trunc(Number(body.displayOrder)))
+        : 0,
     };
 
     const data = await executeCategoryGraphql<

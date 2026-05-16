@@ -11,8 +11,9 @@ import {
   getStoredUser,
 } from "@/services/users";
 import { listAdminOrders } from "@/services/orders";
+import { getBusinessSettings } from "@/services/business-settings";
 import { RootState } from "@/store";
-import { PAYMENTS_ENABLED } from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import {
   MdFavorite,
   MdShoppingCart,
@@ -45,6 +46,11 @@ export default function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [pendingOrdersCount, setPendingOrdersCount] = React.useState(0);
+  const [businessBrand, setBusinessBrand] = React.useState({
+    name: "Tienda online",
+    logoUrl: "/placeholder.webp",
+  });
+  const { paymentsEnabled } = useCommerceSettings();
 
   React.useEffect(() => {
     let isMounted = true;
@@ -83,6 +89,39 @@ export default function Navbar() {
       isMounted = false;
       window.removeEventListener("auth:session-changed", syncAuthState);
       window.removeEventListener("focus", validateStoredSession);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    const loadBusinessBrand = async () => {
+      try {
+        const settings = await getBusinessSettings();
+        if (isMounted) {
+          setBusinessBrand({
+            name: settings.businessName || "Tienda online",
+            logoUrl: settings.logoUrl || "/placeholder.webp",
+          });
+        }
+      } catch {
+        if (isMounted) {
+          setBusinessBrand({
+            name: "Tienda online",
+            logoUrl: "/placeholder.webp",
+          });
+        }
+      }
+    };
+
+    void loadBusinessBrand();
+    window.addEventListener("business-settings:updated", loadBusinessBrand);
+    window.addEventListener("focus", loadBusinessBrand);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("business-settings:updated", loadBusinessBrand);
+      window.removeEventListener("focus", loadBusinessBrand);
     };
   }, []);
 
@@ -130,7 +169,7 @@ export default function Navbar() {
   const isDashboardPath = pathname.startsWith("/dashboard");
   const desktopNavLinks = [
     ...navLinks,
-    ...(isAuthenticated && !isAdmin && PAYMENTS_ENABLED
+    ...(isAuthenticated && !isAdmin && paymentsEnabled
       ? [
           {
             href: "/orders",
@@ -180,13 +219,13 @@ export default function Navbar() {
             className="flex min-w-0 flex-1 items-center justify-start overflow-hidden pr-14 sm:pr-0 lg:flex-none"
           >
             <Image
-              src="/chikitoslandia.png"
-              alt="Logo"
+              src={businessBrand.logoUrl}
+              alt={businessBrand.name}
               width={900}
               height={260}
               priority
-              unoptimized
-              className="h-20 w-[300px] max-w-full object-cover object-center sm:w-[320px] md:w-[360px] lg:h-16 lg:w-[310px] xl:h-18 xl:w-[340px]"
+              unoptimized={businessBrand.logoUrl.startsWith("/")}
+              className="h-20 w-[300px] max-w-full object-contain object-left sm:w-[320px] md:w-[360px] lg:h-16 lg:w-[310px] xl:h-18 xl:w-[340px]"
             />
           </Link>
 
@@ -194,7 +233,7 @@ export default function Navbar() {
             <Link
               href={isAuthenticated ? "/account" : "/login"}
               title={isAuthenticated ? "Mi cuenta" : "Login"}
-              className={`absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors lg:hidden ${
+              className={`absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-brand-200 bg-white/90 shadow-sm transition-colors lg:hidden ${
                 isActivePath(isAuthenticated ? "/account" : "/login")
                   ? "bg-brand-100 text-brand-700"
                   : "text-gray-600 hover:bg-brand-100 hover:text-brand-700"
@@ -488,7 +527,7 @@ export default function Navbar() {
             </>
           )}
 
-          {isAuthenticated && !isAdmin && PAYMENTS_ENABLED && (
+          {isAuthenticated && !isAdmin && paymentsEnabled && (
             <Link
               href="/orders"
               className={`flex min-w-0 flex-1 flex-col items-center rounded-lg px-1 py-2 transition-colors ${

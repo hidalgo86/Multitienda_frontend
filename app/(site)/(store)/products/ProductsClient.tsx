@@ -17,6 +17,7 @@ import { listCategories } from "@/services/categories";
 import ProductSearchBar from "./ProductSearchBar";
 import ProductSortSelect from "./ProductSortSelect";
 import { getRequestBaseUrl } from "@/lib/requestBaseUrl";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const readSingleParam = (
   params: Record<string, string> | undefined,
@@ -40,13 +41,6 @@ const parseSortBy = (value: string): ProductSortBy | undefined =>
     ? (value as ProductSortBy)
     : undefined;
 
-const categoryIdBySlug: Record<string, string | undefined> = {
-  ropa: process.env.NEXT_PUBLIC_CATEGORY_ID_ROPA,
-  juguete: process.env.NEXT_PUBLIC_CATEGORY_ID_JUGUETE,
-  accesorio: process.env.NEXT_PUBLIC_CATEGORY_ID_ACCESORIO,
-  alimentacion: process.env.NEXT_PUBLIC_CATEGORY_ID_ALIMENTACION,
-};
-
 const normalizeCategoryLookupValue = (value: string): string =>
   value
     .trim()
@@ -63,8 +57,6 @@ const resolveCategoryId = async (
   if (!category) return "";
 
   const normalizedCategory = normalizeCategoryLookupValue(category);
-  const configuredCategoryId = categoryIdBySlug[normalizedCategory]?.trim();
-  if (configuredCategoryId) return configuredCategoryId;
 
   try {
     const categories = await listCategories({ baseUrl, cache: "no-store" });
@@ -125,7 +117,7 @@ export default async function ProductsClient({
       : await listProducts(
           {
             page,
-            limit: 20,
+            limit: paginationConfig.productListLimit,
             availability: ProductAvailability.DISPONIBLE,
             name: search || undefined,
             categoryId: resolvedCategoryId || undefined,

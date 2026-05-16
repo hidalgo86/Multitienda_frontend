@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { MdCheckCircle, MdClose, MdShoppingCart } from "react-icons/md";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImages";
+import ProductImage from "@/components/products/ProductImage";
 import type { Product } from "@/types/domain/products";
 
 interface AddedToCartPanelProps {
@@ -127,7 +127,7 @@ export default function AddedToCartPanel({
                   onClick={onClose}
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-slate-100">
-                    <Image
+                    <ProductImage
                       src={resolveImage(item)}
                       alt={item.name}
                       fill

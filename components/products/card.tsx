@@ -1,7 +1,7 @@
-import Image from "next/image";
 import { getProductStatusLabel } from "@/types/domain/products";
 import type { ProductCardProps } from "@/types/ui/products";
 import { MdShoppingCart } from "react-icons/md";
+import ProductImage from "@/components/products/ProductImage";
 
 const statusColors: Record<string, string> = {
   disponible: "bg-green-100 text-green-700 border-green-300",
@@ -44,7 +44,7 @@ function Card({
       aria-label={`Tarjeta producto ${product.name}`}
     >
       <div className="w-full h-40 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden relative">
-        <Image
+        <ProductImage
           src={coverImage}
           alt={product.name}
           width={224}

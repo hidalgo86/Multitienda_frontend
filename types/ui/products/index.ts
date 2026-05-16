@@ -17,6 +17,7 @@ export interface ProductCardPublicProps {
   product: Product;
   onAddToCart?: ProductActionHandler;
   onFavorite?: ProductActionHandler;
+  imagePriority?: boolean;
 }
 
 export interface ProductCardAdminProps {
@@ -31,6 +32,7 @@ export interface ProductListPublicProps {
   products: Product[];
   onAddToCart?: ProductActionHandler;
   onFavorite?: ProductActionHandler;
+  priorityFirstImage?: boolean;
 }
 
 export interface ProductListAdminProps {

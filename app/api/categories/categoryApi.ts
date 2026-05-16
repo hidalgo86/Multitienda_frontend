@@ -51,7 +51,7 @@ const buildHeaders = (request?: NextRequest): HeadersInit => {
   return headers;
 };
 
-const normalizeCategory = (value: unknown): Category => {
+export const normalizeCategory = (value: unknown): Category | null => {
   const record =
     value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   const id = typeof record.id === "string" ? record.id : "";
@@ -63,12 +63,30 @@ const normalizeCategory = (value: unknown): Category => {
       : typeof record.parent === "string"
         ? record.parent
         : undefined;
+  const description =
+    typeof record.description === "string" ? record.description : undefined;
+  const imageUrl =
+    typeof record.imageUrl === "string" ? record.imageUrl : undefined;
+  const imagePublicId =
+    typeof record.imagePublicId === "string" ? record.imagePublicId : null;
+  const isFeatured = record.isFeatured === true;
+  const displayOrder =
+    typeof record.displayOrder === "number" ? record.displayOrder : 0;
 
-  if (!id || !name || !slug) {
-    throw new CategoryApiError("Respuesta invalida del backend", 500);
-  }
+  if (!id || !name || !slug) return null;
 
-  return { id, name, slug, parentId, parent: parentId };
+  return {
+    id,
+    name,
+    slug,
+    parentId,
+    parent: parentId,
+    description,
+    imageUrl,
+    imagePublicId,
+    isFeatured,
+    displayOrder,
+  };
 };
 
 export const executeCategoryGraphql = async <
@@ -115,9 +133,50 @@ export const categoryFields = `
   name
   slug
   parentId
+  description
+  imageUrl
+  imagePublicId
+  isFeatured
+  displayOrder
 `;
 
 export const readCategoryFromData = (
   data: Record<string, unknown>,
   key: string,
-): Category => normalizeCategory(data[key]);
+): Category => {
+  const category = normalizeCategory(data[key]);
+
+  if (!category) {
+    throw new CategoryApiError("Respuesta invalida del backend", 500);
+  }
+
+  return category;
+};
+
+export const readCategoriesFromData = (
+  data?: Record<string, unknown>,
+): Category[] => {
+  if (!data) return [];
+
+  const candidates = [
+    data.categories,
+    data.getCategories,
+    typeof data.categories === "object" && data.categories !== null
+      ? (data.categories as Record<string, unknown>).items
+      : undefined,
+    typeof data.getCategories === "object" && data.getCategories !== null
+      ? (data.getCategories as Record<string, unknown>).items
+      : undefined,
+  ];
+
+  for (const candidate of candidates) {
+    if (!Array.isArray(candidate)) continue;
+    const categories = candidate
+      .map(normalizeCategory)
+      .filter(Boolean) as Category[];
+
+    if (categories.length > 0) return categories;
+  }
+
+  return [];
+};

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeUsersGraphql } from "../../users/graphqlClient";
 import { UserApiRouteError } from "../../users/userApi.error";
-import { PAYMENTS_ENABLED, paymentsDisabledMessage } from "@/lib/commerceConfig";
 
 const checkoutMutation = `
   mutation CheckoutMyCart($input: CheckoutInput) {
@@ -40,10 +39,29 @@ const checkoutMutation = `
   }
 `;
 
+const settingsQuery = `
+  query BusinessSettings {
+    businessSettings {
+      paymentsEnabled
+      checkoutDisabledMessage
+    }
+  }
+`;
+
 export async function POST(req: NextRequest) {
-  if (!PAYMENTS_ENABLED) {
+  const settings = await executeUsersGraphql<{
+    businessSettings: {
+      paymentsEnabled: boolean;
+      checkoutDisabledMessage: string;
+    };
+  }>({
+    query: settingsQuery,
+    request: req,
+  }).catch(() => null);
+
+  if (settings?.businessSettings.paymentsEnabled === false) {
     return NextResponse.json(
-      { error: paymentsDisabledMessage },
+      { error: settings.businessSettings.checkoutDisabledMessage },
       { status: 503 },
     );
   }

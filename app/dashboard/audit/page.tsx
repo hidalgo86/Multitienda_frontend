@@ -9,6 +9,7 @@ import {
 import type { AuditLog, AuditLogFilters } from "@/types/domain/audit";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { MdRefresh, MdSearch } from "react-icons/md";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const INITIAL_FILTERS: AuditLogFilters = {
   actorUserId: "",
@@ -307,7 +308,7 @@ export default function DashboardAuditPage() {
       const response = await listAdminAuditLogs({
         ...appliedFilters,
         page,
-        limit: 15,
+        limit: paginationConfig.adminAuditLimit,
       });
       setAuditPage(normalizeAuditPage(response));
     } catch (loadError) {

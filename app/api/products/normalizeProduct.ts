@@ -12,10 +12,10 @@ import {
   ProductStats,
   VariantProduct,
 } from "@/types/domain/products";
+import { isAllowedRemoteImageUrl } from "@/lib/imageHosts";
 
 type UnknownRecord = Record<string, unknown>;
 const PLACEHOLDER_IMAGE = "/placeholder.webp";
-const ALLOWED_IMAGE_HOSTS = new Set(["res.cloudinary.com"]);
 
 const normalizeImageUrl = (value: unknown): string | undefined => {
   if (typeof value !== "string") return undefined;
@@ -23,17 +23,7 @@ const normalizeImageUrl = (value: unknown): string | undefined => {
   const url = value.trim();
   if (!url) return undefined;
   if (url.startsWith("/")) return url;
-
-  try {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.protocol === "https:" && ALLOWED_IMAGE_HOSTS.has(parsedUrl.hostname)) {
-      return url;
-    }
-  } catch {
-    return undefined;
-  }
-
-  return undefined;
+  return isAllowedRemoteImageUrl(url) ? url : undefined;
 };
 
 const normalizeVariant = (variant: unknown): VariantProduct => {

@@ -41,7 +41,7 @@ export default function Carrusel() {
       getOptimizedCloudinaryUrl(banner.imageUrl, {
         width: 1400,
         height: 560,
-        crop: "fill",
+        crop: "fit",
       }) || banner.imageUrl,
     alt: banner.altText || banner.title,
     title: banner.title,
@@ -135,7 +135,7 @@ export default function Carrusel() {
               src={currentImage.src}
               alt={currentImage.alt}
               fill
-              style={{ objectFit: "cover" }}
+              style={{ objectFit: "contain" }}
               className="rounded-lg sm:rounded-xl lg:rounded-2xl"
               priority
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 70vw"
@@ -146,7 +146,7 @@ export default function Carrusel() {
             src={currentImage.src}
             alt={currentImage.alt}
             fill
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "contain" }}
             className="rounded-lg sm:rounded-xl lg:rounded-2xl"
             priority
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 70vw"

@@ -14,9 +14,11 @@ import {
 import ProductListAdmin from "@/components/products/ProductListAdmin";
 import Pagination from "@/components/Pagination";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import CategoriesManagerModal from "./CategoriesManagerModal";
+import BannersManagerModal from "./BannersManagerModal";
 import { useAdminProducts } from "./useAdminProducts";
 import { updateProduct } from "@/services/products";
-import { MdAdd, MdSearch } from "react-icons/md";
+import { MdAdd, MdCategory, MdSearch, MdViewCarousel } from "react-icons/md";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 
@@ -67,6 +69,8 @@ const ProductsContent: React.FC = () => {
   const [sortBy, setSortBy] = useState<ProductSortBy>(initialSortBy);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+  const [isBannersModalOpen, setIsBannersModalOpen] = useState(false);
 
   const { products, setProducts, totalPages, loading, error, refetch } =
     useAdminProducts({
@@ -235,6 +239,14 @@ const ProductsContent: React.FC = () => {
           }
         }}
       />
+      <CategoriesManagerModal
+        open={isCategoriesModalOpen}
+        onClose={() => setIsCategoriesModalOpen(false)}
+      />
+      <BannersManagerModal
+        open={isBannersModalOpen}
+        onClose={() => setIsBannersModalOpen(false)}
+      />
 
       <div className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -242,14 +254,32 @@ const ProductsContent: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900">Productos</h1>
           </div>
 
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard/products/create")}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-          >
-            <MdAdd size={18} />
-            Nuevo producto
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setIsBannersModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <MdViewCarousel size={18} />
+              Carrusel
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCategoriesModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              <MdCategory size={18} />
+              Categorias
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard/products/create")}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              <MdAdd size={18} />
+              Nuevo producto
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between">

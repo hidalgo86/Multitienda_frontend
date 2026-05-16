@@ -1,3 +1,5 @@
+import { isCloudinaryImageUrl } from "./imageHosts";
+
 const CLOUDINARY_UPLOAD_SEGMENT = "/image/upload/";
 
 type CloudinaryImageOptions = {
@@ -11,7 +13,7 @@ export const getOptimizedCloudinaryUrl = (
   sourceUrl?: string | null,
   options: CloudinaryImageOptions = {},
 ): string => {
-  if (!sourceUrl || !sourceUrl.includes("res.cloudinary.com")) {
+  if (!sourceUrl || !isCloudinaryImageUrl(sourceUrl)) {
     return sourceUrl || "";
   }
 

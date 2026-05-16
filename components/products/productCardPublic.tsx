@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   formatSizeLabel,
@@ -19,6 +18,7 @@ import {
 import { useCartActions } from "@/lib/useCartActions";
 import { isStoredAdminUser } from "@/services/users";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImages";
+import ProductImage from "@/components/products/ProductImage";
 
 const PLACEHOLDER = "/placeholder.webp";
 
@@ -62,6 +62,7 @@ const ProductCardPublic: React.FC<ProductCardPublicProps> = ({
   product,
   onAddToCart,
   onFavorite,
+  imagePriority = false,
 }) => {
   const { changeCartItemQuantity } = useCartActions();
   const [hasMounted, setHasMounted] = React.useState(false);
@@ -117,12 +118,14 @@ const ProductCardPublic: React.FC<ProductCardPublicProps> = ({
         className="relative aspect-[4/5] w-full overflow-hidden bg-slate-100"
         aria-label={`Ver detalle de ${product.name}`}
       >
-        <Image
+        <ProductImage
           src={imageSrc}
           alt={product.name}
           fill
           className="object-cover transition duration-200 hover:scale-[1.03]"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          loading={imagePriority ? "eager" : "lazy"}
+          fetchPriority={imagePriority ? "high" : "auto"}
         />
       </Link>
 

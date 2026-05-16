@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
-import Image from "next/image";
 import {
   findVariantBySelection,
   formatGenreLabel,
@@ -18,6 +17,7 @@ import {
 import type { ProductDetailClientProps } from "@/types/ui/products";
 import ProductListPublic from "@/components/products/ProductListPublic";
 import AddedToCartPanel from "@/components/products/AddedToCartPanel";
+import ProductImage from "@/components/products/ProductImage";
 import { useCategories } from "@/services/categories/useCategories";
 import { RootState } from "@/store";
 import { useCartActions } from "@/lib/useCartActions";
@@ -37,10 +37,7 @@ import {
   MdChevronLeft,
   MdChevronRight,
 } from "react-icons/md";
-import {
-  PAYMENTS_ENABLED,
-  paymentsDisabledMessage,
-} from "@/lib/commerceConfig";
+import { useCommerceSettings } from "@/lib/useCommerceSettings";
 import { toast } from "sonner";
 import { isStoredAdminUser } from "@/services/users";
 import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImages";
@@ -65,6 +62,7 @@ export default function ProductDetailClient({
   const isAdminUser = isAdminMode || isStoredAdminUser();
   const isRopa = hasProductVariants(producto) || Boolean(producto.genre);
   const { options } = useCategories();
+  const { paymentsEnabled, paymentsDisabledMessage } = useCommerceSettings();
   const { addProductToCart, changeCartItemQuantity } = useCartActions();
   const { toggleProductFavorite } = useFavoriteActions();
   const categoryOptions = options.length
@@ -328,7 +326,7 @@ export default function ProductDetailClient({
 
   const handleBuyNow = async () => {
     if (isBuyingNow) return;
-    if (!PAYMENTS_ENABLED) {
+    if (!paymentsEnabled) {
       toast.error(paymentsDisabledMessage);
       return;
     }
@@ -451,7 +449,7 @@ export default function ProductDetailClient({
             className="relative h-full max-h-[92dvh] w-full max-w-6xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <Image
+            <ProductImage
               src={viewerImageUrl}
               alt={producto.name || "Producto"}
               fill
@@ -503,13 +501,13 @@ export default function ProductDetailClient({
               onClick={handleBuyNow}
               disabled={
                 isBuyingNow ||
-                !PAYMENTS_ENABLED ||
+                !paymentsEnabled ||
                 (isRopa && !selectedSize) ||
                 availableStock === 0
               }
               className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-lg bg-gray-900 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {!PAYMENTS_ENABLED
+              {!paymentsEnabled
                 ? "No disponible"
                 : isBuyingNow
                   ? "Preparando..."
@@ -542,7 +540,7 @@ export default function ProductDetailClient({
                   className="relative flex h-full w-full cursor-zoom-in items-center justify-center"
                   aria-label="Ampliar imagen del producto"
                 >
-                  <Image
+                  <ProductImage
                     src={selectedImageUrl}
                     alt={producto.name || "Producto"}
                     width={900}
@@ -569,7 +567,7 @@ export default function ProductDetailClient({
                         }`}
                         aria-label={`Ver imagen ${idx + 1}`}
                       >
-                        <Image
+                        <ProductImage
                           src={
                             getOptimizedCloudinaryUrl(img.url, {
                               width: 160,
@@ -885,19 +883,19 @@ export default function ProductDetailClient({
                       onClick={handleBuyNow}
                       disabled={
                         isBuyingNow ||
-                        !PAYMENTS_ENABLED ||
+                        !paymentsEnabled ||
                         (isRopa && !selectedSize) ||
                         availableStock === 0
                       }
                       className="w-full bg-gray-900 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {!PAYMENTS_ENABLED
+                      {!paymentsEnabled
                         ? "Compra no disponible"
                         : isBuyingNow
                           ? "Preparando compra..."
                           : "Comprar ahora"}
                     </button>
-                    {!PAYMENTS_ENABLED && (
+                    {!paymentsEnabled && (
                       <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
                         {paymentsDisabledMessage}
                       </p>

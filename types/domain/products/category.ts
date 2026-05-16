@@ -15,6 +15,11 @@ export interface Category {
   slug: string;
   parent?: string;
   parentId?: string;
+  description?: string;
+  imageUrl?: string;
+  imagePublicId?: string | null;
+  isFeatured?: boolean;
+  displayOrder?: number;
 }
 
 export interface ProductCategoryOption {

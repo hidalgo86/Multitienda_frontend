@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { MdChevronRight, MdSearch } from "react-icons/md";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const USER_STATUS_OPTIONS = [
   { value: "activo", label: "Activo" },
@@ -89,7 +90,7 @@ export default function DashboardClientsPage() {
 
       const response = await listAdminUsers({
         page,
-        limit: 20,
+        limit: paginationConfig.adminUsersLimit,
         username: debouncedSearch || undefined,
         status: status || undefined,
       });

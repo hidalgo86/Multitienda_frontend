@@ -10,49 +10,55 @@ import {
   MdSupportAgent,
   MdVerified,
 } from "react-icons/md";
+import { getServerBusinessSettings } from "@/lib/businessSettingsServer";
 
-export const metadata: Metadata = {
-  title: "Acerca de Chikitoslandia",
-  description:
-    "Conoce Chikitoslandia, tienda online y física de ropa, juguetes y artículos para bebés y niños.",
-  alternates: {
-    canonical: "/acerca",
-  },
-  openGraph: {
-    title: "Acerca de Chikitoslandia",
-    description:
-      "Conoce Chikitoslandia, tienda online y física de ropa, juguetes y artículos para bebés y niños.",
-    url: "/acerca",
-    type: "website",
-  },
+export const generateMetadata = async (): Promise<Metadata> => {
+  const settings = await getServerBusinessSettings();
+
+  return {
+    title: settings.aboutTitle,
+    description: settings.aboutText,
+    alternates: {
+      canonical: "/acerca",
+    },
+    openGraph: {
+      title: settings.aboutTitle,
+      description: settings.aboutText,
+      url: "/acerca",
+      type: "website",
+      images: [settings.aboutImageUrl],
+    },
+  };
 };
 
 const highlights = [
   {
     Icon: MdStorefront,
-    title: "Tienda para peques",
-    text: "Ropa, juguetes y artículos seleccionados para bebés, niños y niñas.",
+    title: "Tienda cercana",
+    text: "Productos seleccionados para comprar con confianza y sin complicarte.",
   },
   {
     Icon: MdSupportAgent,
-    title: "Atención cercana",
-    text: "Te ayudamos con tallas, disponibilidad y dudas antes de preparar tu compra.",
+    title: "Atencion directa",
+    text: "Te ayudamos con disponibilidad, dudas y detalles antes de preparar tu compra.",
   },
   {
     Icon: MdLocalShipping,
-    title: "Envíos coordinados",
-    text: "Despachos y entregas se acuerdan según destino y disponibilidad.",
+    title: "Entrega coordinada",
+    text: "Retiro o entrega segun la configuracion y disponibilidad del negocio.",
   },
 ];
 
 const values = [
   "Productos revisados antes de entregar",
-  "Confirmación de pago antes de preparar pedidos",
-  "Comunicación directa por redes sociales",
-  "Catálogo pensado para comprar sin complicarte",
+  "Confirmacion de pago antes de preparar pedidos",
+  "Comunicacion directa por redes sociales",
+  "Catalogo pensado para comprar de forma simple",
 ];
 
-export default function AcercaPage() {
+export default async function AcercaPage() {
+  const settings = await getServerBusinessSettings();
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <main>
@@ -61,13 +67,10 @@ export default function AcercaPage() {
             <div className="flex flex-col justify-center px-5 py-12 sm:px-8 lg:px-12 xl:px-16">
               <div className="max-w-3xl">
                 <h1 className="text-3xl font-bold leading-tight text-slate-950 sm:text-4xl lg:text-5xl">
-                  Una tienda cercana para vestir, cuidar y consentir a los más
-                  pequeños.
+                  {settings.aboutTitle}
                 </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
-                  En Chikitoslandia reunimos productos útiles, cómodos y bonitos
-                  para bebés, niños y niñas. Compras online con trato humano y
-                  apoyo directo cuando necesitas elegir mejor.
+                <p className="mt-5 max-w-2xl whitespace-pre-line text-base leading-7 text-slate-700 sm:text-lg">
+                  {settings.aboutText}
                 </p>
 
                 <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -77,26 +80,29 @@ export default function AcercaPage() {
                   >
                     Ver productos
                   </Link>
-                  <Link
-                    href="https://instagram.com/chikitoslandia"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
-                  >
-                    <FaInstagram size={20} />
-                    Instagram
-                  </Link>
+                  {settings.instagramUrl ? (
+                    <Link
+                      href={settings.instagramUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-700 transition hover:bg-brand-100"
+                    >
+                      <FaInstagram size={20} />
+                      Instagram
+                    </Link>
+                  ) : null}
                 </div>
               </div>
             </div>
 
             <div className="relative flex min-h-[300px] items-center justify-center bg-white p-4 sm:p-6 lg:min-h-full lg:p-8">
               <Image
-                src="/chikitoslandia-og.png"
-                alt="Productos y estilo de Chikitoslandia"
+                src={settings.aboutImageUrl}
+                alt={settings.aboutTitle}
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 45vw"
+                unoptimized={settings.aboutImageUrl.startsWith("/")}
                 className="object-contain object-center"
               />
             </div>
@@ -126,12 +132,10 @@ export default function AcercaPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-slate-950">
-                    Nos encontramos en Güiria
+                    Ubicacion
                   </h2>
                   <p className="mt-3 text-base leading-7 text-slate-700">
-                    Estamos ubicados en Calle Pagallos, Güiria, Estado Sucre,
-                    frente a los chinos Fabiola. Puedes coordinar disponibilidad,
-                    entrega o retiro antes de concretar tu compra.
+                    {settings.address || settings.storePickupAddress}
                   </p>
                 </div>
               </div>

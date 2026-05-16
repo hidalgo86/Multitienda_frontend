@@ -16,6 +16,8 @@ import {
   getProductUrlPath,
   siteUrl,
 } from "@/lib/seo";
+import { getServerBusinessSettings } from "@/lib/businessSettingsServer";
+import { paginationConfig } from "@/lib/paginationConfig";
 
 const getRequestBaseUrl = async (): Promise<string> => {
   const reqHeaders = await headers();
@@ -46,7 +48,8 @@ export async function generateMetadata({
       cache: "no-store",
       trackView: false,
     });
-    const description = getProductDescription(producto);
+    const settings = await getServerBusinessSettings();
+    const description = getProductDescription(producto, settings.businessName);
     const image = getProductImageUrl(producto);
     const path = getProductUrlPath(producto);
 
@@ -97,7 +100,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     const relatedProducts = await listProducts(
       {
         page: 1,
-        limit: 5,
+        limit: paginationConfig.relatedProductsLimit,
         availability: ProductAvailability.DISPONIBLE,
         categoryId: producto.categoryId || undefined,
         category: producto.categoryId
@@ -116,17 +119,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
       )
       .catch(() => []);
     const nonce = (await headers()).get("x-nonce") ?? undefined;
+    const settings = await getServerBusinessSettings();
     const price = getProductPrice(producto);
     const productSchema = {
       "@context": "https://schema.org",
       "@type": "Product",
       name: producto.name,
-      description: getProductDescription(producto),
+      description: getProductDescription(producto, settings.businessName),
       image: [getProductImageUrl(producto)],
       sku: producto.sku || producto.id,
       brand: {
         "@type": "Brand",
-        name: producto.brand || "Chikitoslandia",
+        name: producto.brand || settings.businessName,
       },
       offers: price
         ? {

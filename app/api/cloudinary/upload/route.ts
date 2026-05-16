@@ -13,8 +13,19 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
-const ALLOWED_FOLDERS = new Set(["products", "banners", "payment-proofs"]);
-const DELETABLE_ADMIN_FOLDERS = new Set(["products", "banners"]);
+const ALLOWED_FOLDERS = new Set([
+  "products",
+  "banners",
+  "payment-proofs",
+  "logos",
+  "categories",
+]);
+const DELETABLE_ADMIN_FOLDERS = new Set([
+  "products",
+  "banners",
+  "logos",
+  "categories",
+]);
 
 const meQuery = `
   query Me {

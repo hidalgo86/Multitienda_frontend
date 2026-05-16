@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   formatSizeLabel,
@@ -7,6 +6,7 @@ import {
   getProductStock,
 } from "@/types/domain/products";
 import type { ProductCardAdminProps } from "@/types/ui/products";
+import ProductImage from "@/components/products/ProductImage";
 
 const statusColors: Record<string, string> = {
   disponible: "bg-green-100 text-green-700 border-green-300",
@@ -83,7 +83,7 @@ const ProductCardAdmin: React.FC<ProductCardAdminProps> = ({
         className="w-full h-40 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden relative"
         aria-label={`Ver detalle de ${product.name}`}
       >
-        <Image
+        <ProductImage
           src={coverImage}
           alt={product.name}
           fill

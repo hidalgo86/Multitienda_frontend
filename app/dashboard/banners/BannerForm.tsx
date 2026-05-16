@@ -78,7 +78,7 @@ export default function BannerForm({
               src={imageSrc}
               alt={values.title || "Banner"}
               fill
-              className="object-cover"
+              className="object-contain"
               sizes="(max-width: 1024px) 100vw, 360px"
             />
 

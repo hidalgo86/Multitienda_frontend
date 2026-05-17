@@ -9,7 +9,7 @@ import {
   restoreProductInBackend,
   updateProductInBackend,
 } from "./updateProductMutation";
-import { getBackendAuthorization } from "../../../_utils/security";
+import { getBackendAuthorization } from "@/app/api/_utils/security";
 
 export async function PATCH(
   req: NextRequest,

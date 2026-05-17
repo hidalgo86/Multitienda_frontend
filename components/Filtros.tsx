@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { MdOutlineRestartAlt, MdTune } from "react-icons/md";
 import {
   formatSizeLabel,
@@ -40,13 +40,22 @@ const readParam = (searchParams: URLSearchParams | null, ...keys: string[]) => {
 const fieldClassName =
   "w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 outline-none transition focus:border-brand-300 focus:ring-4 focus:ring-brand-100 disabled:bg-gray-50 disabled:text-gray-400";
 
-export default function Filtros({ onFilterApply }: ProductFiltersProps) {
+export default function Filtros({
+  onFilterApply,
+  categoryOptions: initialCategoryOptions,
+}: ProductFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { options } = useCategories();
-  const categoryOptions = options.length
-    ? options
+  const [, startTransition] = useTransition();
+  const { options } = useCategories({
+    enabled: !initialCategoryOptions?.length,
+    initialOptions: initialCategoryOptions,
+  });
+  const categoryOptions = initialCategoryOptions?.length
+    ? initialCategoryOptions
+    : options.length
+      ? options
     : legacyProductCategoryOptions;
 
   const [categoryId, setCategoryId] = useState(
@@ -90,7 +99,9 @@ export default function Filtros({ onFilterApply }: ProductFiltersProps) {
     params.set("page", "1");
     const query = params.toString();
     const newUrl = query ? `${pathname}?${query}` : pathname;
-    router.push(newUrl);
+    startTransition(() => {
+      router.replace(newUrl, { scroll: false });
+    });
     onFilterApply?.();
   };
 

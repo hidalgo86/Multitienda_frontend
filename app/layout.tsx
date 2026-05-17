@@ -8,8 +8,26 @@ import { getServerBusinessSettings } from "@/lib/businessSettingsServer";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+const withVersion = (url: string, version?: string | Date): string => {
+  if (!url || url.startsWith("/")) return url;
+
+  try {
+    const nextUrl = new URL(url);
+    if (version) {
+      nextUrl.searchParams.set("v", String(version));
+    }
+    return nextUrl.toString();
+  } catch {
+    return url;
+  }
+};
+
 export const generateMetadata = async (): Promise<Metadata> => {
-  const settings = await getServerBusinessSettings();
+  const settings = await getServerBusinessSettings({ cache: "no-store" });
+  const iconUrl = withVersion(
+    settings.logoUrl,
+    settings.updatedAt || settings.logoPublicId || undefined,
+  );
 
   return {
     metadataBase: new URL(siteUrl),
@@ -39,6 +57,11 @@ export const generateMetadata = async (): Promise<Metadata> => {
       title: settings.seoTitle,
       description: settings.seoDescription,
       images: [settings.ogImageUrl],
+    },
+    icons: {
+      icon: iconUrl,
+      shortcut: iconUrl,
+      apple: iconUrl,
     },
     other: {
       google: "notranslate",

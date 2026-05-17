@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { Banner } from "@/types/domain/banners";
 
+export const revalidate = 300;
+
 interface GraphqlPayload {
   data?: {
     banners?: Banner[];
@@ -44,7 +46,7 @@ export async function GET() {
           }
         `,
       }),
-      cache: "no-store",
+      next: { revalidate },
     });
 
     const payload = (await response.json()) as GraphqlPayload;

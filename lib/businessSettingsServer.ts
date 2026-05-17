@@ -63,6 +63,11 @@ const query = `
 const normalizeString = (value: unknown): string =>
   typeof value === "string" ? value.trim() : "";
 
+interface ServerBusinessSettingsOptions {
+  cache?: RequestCache;
+  revalidate?: number;
+}
+
 const fallbackSettings = (): BusinessSettings => ({
   businessName: "Tienda online",
   legalName: "",
@@ -153,16 +158,24 @@ const normalizeSettings = (raw: Partial<BusinessSettings> | null): BusinessSetti
   };
 };
 
-export const getServerBusinessSettings = async (): Promise<BusinessSettings> => {
+export const getServerBusinessSettings = async ({
+  cache,
+  revalidate = 300,
+}: ServerBusinessSettingsOptions = {}): Promise<BusinessSettings> => {
   const apiUrl = process.env.API_URL?.trim();
   if (!apiUrl) return fallbackSettings();
+
+  const cacheOptions =
+    cache === "no-store"
+      ? { cache }
+      : { next: { revalidate } };
 
   try {
     const response = await fetch(`${apiUrl}/graphql`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
-      cache: "no-store",
+      ...cacheOptions,
     });
     const payload = (await response.json()) as {
       data?: { businessSettings?: Partial<BusinessSettings> };

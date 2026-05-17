@@ -8,13 +8,30 @@ import {
 } from "@/types/domain/products";
 import { listCategories } from "./index";
 
-export const useCategories = () => {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [options, setOptions] = useState<ProductCategoryOption[]>([]);
-  const [loading, setLoading] = useState(true);
+interface UseCategoriesOptions {
+  enabled?: boolean;
+  initialCategories?: Category[];
+  initialOptions?: ProductCategoryOption[];
+}
+
+export const useCategories = ({
+  enabled = true,
+  initialCategories = [],
+  initialOptions,
+}: UseCategoriesOptions = {}) => {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [options, setOptions] = useState<ProductCategoryOption[]>(
+    initialOptions ?? buildProductCategoryOptions(initialCategories),
+  );
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -31,11 +48,16 @@ export const useCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
+    void reload();
+  }, [enabled, reload]);
 
   return {
     categories,

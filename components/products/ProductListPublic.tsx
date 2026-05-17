@@ -30,4 +30,4 @@ const ProductListPublic: React.FC<ProductListPublicProps> = ({
   );
 };
 
-export default ProductListPublic;
+export default React.memo(ProductListPublic);

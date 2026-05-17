@@ -13,9 +13,13 @@ export default function PublicListWrapper({
 }) {
   const { addProductToCart } = useCartActions();
   const { toggleProductFavorite } = useFavoriteActions();
+  const productsById = React.useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products],
+  );
 
-  const handleAddToCart = (id: string) => {
-    const producto = products.find((p) => p.id === id);
+  const handleAddToCart = React.useCallback((id: string) => {
+    const producto = productsById.get(id);
     if (!producto) return;
     const variants = producto.variants || [];
     const selectedVariant =
@@ -26,13 +30,13 @@ export default function PublicListWrapper({
         quantity: 1,
         selectedSize: variantName || undefined,
       });
-  };
+  }, [addProductToCart, productsById]);
 
-  const handleFavorite = (id: string) => {
-    const producto = products.find((p) => p.id === id);
+  const handleFavorite = React.useCallback((id: string) => {
+    const producto = productsById.get(id);
     if (!producto) return;
     void toggleProductFavorite(producto);
-  };
+  }, [productsById, toggleProductFavorite]);
 
   return (
     <ProductListPublic

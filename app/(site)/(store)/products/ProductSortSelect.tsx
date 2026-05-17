@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 import { ProductSortBy } from "@/types/domain/products";
 
 const sortOptions = [
@@ -19,6 +20,7 @@ export default function ProductSortSelect({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const nextSort = event.target.value;
@@ -33,7 +35,11 @@ export default function ProductSortSelect({
     }
 
     const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    });
   };
 
   return (

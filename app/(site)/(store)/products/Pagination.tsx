@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import BasePagination from "../../../../components/Pagination";
+import BasePagination from "@/components/Pagination";
 
 export default function Pagination({
   currentPage,
@@ -17,7 +17,7 @@ export default function Pagination({
   const onPageChange = (page: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(page));
-    router.push(`/products?${params.toString()}`);
+    router.replace(`/products?${params.toString()}`, { scroll: false });
   };
 
   return (

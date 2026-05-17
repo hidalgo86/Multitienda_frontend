@@ -66,24 +66,14 @@ export default function Cards({
   );
 
   useEffect(() => {
-    if (initialProducts.length === 0) {
+    const shouldLoadOnClient = initialProducts.length === 0;
+
+    if (shouldLoadOnClient) {
       void loadProducts(true, true);
+      return undefined;
     }
 
-    const interval = setInterval(() => {
-      void loadProducts(false);
-    }, 120000);
-
-    const handleFocus = () => {
-      void loadProducts(false);
-    };
-
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener("focus", handleFocus);
-    };
+    return undefined;
   }, [initialProducts.length, loadProducts]);
 
   if (loading) {

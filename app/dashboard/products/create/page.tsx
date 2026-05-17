@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   CreateProduct,
@@ -9,7 +8,6 @@ import {
   Size,
   Genre,
   legacyProductCategoryOptions,
-  formatSizeLabel,
   getVariantName,
   isClothingCategory,
 } from "@/types/domain/products";
@@ -21,6 +19,9 @@ import type {
 import { PRODUCT_FORM_MAX_IMAGES } from "@/types/ui/products";
 import { createProduct, uploadProductImage } from "@/services/products";
 import { useCategories } from "@/services/categories/useCategories";
+import CreateProductImagesSection from "@/features/products/components/CreateProductImagesSection";
+import CreateProductVariantsSection from "@/features/products/components/CreateProductVariantsSection";
+import ProductForm from "@/features/products/components/ProductForm";
 
 const CreateProductPage: React.FC = () => {
   const router = useRouter();
@@ -432,473 +433,62 @@ const CreateProductPage: React.FC = () => {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  return (
-    <div className="max-w-xl mx-auto py-8">
-      <button
-        type="button"
-        onClick={() => router.push("/dashboard/products")}
-        className="flex items-center gap-2 text-gray-600 hover:text-brand-600 transition-colors mb-4"
-      >
-        <span aria-hidden="true">&lt;</span>
-        <span className="text-sm font-medium">Volver</span>
-      </button>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Crear nuevo producto</h1>
-      </div>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          ref={galleryInputRef}
-          onChange={handleImageChange}
-        />
-        <input
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          ref={cameraInputRef}
-          onChange={handleImageChange}
-        />
-        <div className="flex flex-col items-center gap-2">
-          <div className="relative w-40 h-40">
-            <div className="w-40 h-40 bg-gray-100 border border-gray-300 rounded flex items-center justify-center overflow-hidden">
-              {imagePreviews[0] ? (
-                <Image
-                  src={imagePreviews[0]}
-                  alt="Previsualizacion"
-                  width={160}
-                  height={160}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <svg
-                  className="w-16 h-16 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 7v10a4 4 0 004 4h10a4 4 0 004-4V7a4 4 0 00-4-4H7a4 4 0 00-4 4z"
-                  />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </div>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-3">
-              <button
-                type="button"
-                aria-label="Subir desde galeria"
-                title="Subir desde galeria"
-                className="group relative bg-white/90 hover:bg-white text-emerald-600 hover:text-emerald-700 rounded-full p-2 shadow backdrop-blur"
-                onClick={() => galleryInputRef.current?.click()}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    galleryInputRef.current?.click();
-                  }
-                }}
-              >
-                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs bg-black text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
-                  Galeria
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path d="M4 5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H4zm3.5 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zM4 17l4.5-4.5 3 3L15 12l5 5H4z" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                aria-label="Tomar foto"
-                title="Tomar foto"
-                className="group relative bg-white/90 hover:bg-white text-brand-600 hover:text-brand-700 rounded-full p-2 shadow backdrop-blur"
-                onClick={openCamera}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openCamera();
-                  }
-                }}
-              >
-                <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs bg-black text-white px-2 py-1 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition-opacity">
-                  Camara
-                </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M9.25 4.5a1.75 1.75 0 0 0-1.49.833L6.86 6.75H5A2.75 2.75 0 0 0 2.25 9.5v7A2.75 2.75 0 0 0 5 19.25h14A2.75 2.75 0 0 0 21.75 16.5v-7A2.75 2.75 0 0 0 19 6.75h-1.86l-.9-1.417A1.75 1.75 0 0 0 14.75 4.5h-5.5Zm2.75 11.75a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-          {imagePreviews.length > 0 && (
-            <>
-              <div className="text-xs text-gray-600">
-                {imagePreviews.length} imagen(es) seleccionada(s) de{" "}
-                {PRODUCT_FORM_MAX_IMAGES}
-              </div>
-              <div className="grid grid-cols-4 gap-2 w-full max-w-md">
-                {imagePreviews.map((preview, idx) => (
-                  <div key={`${preview}-${idx}`} className="relative">
-                    <Image
-                      src={preview}
-                      alt={`Imagen ${idx + 1}`}
-                      width={72}
-                      height={72}
-                      className="w-18 h-18 object-cover rounded border"
-                    />
-                    <button
-                      type="button"
-                      className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 text-xs"
-                      onClick={() => removeImageAt(idx)}
-                      aria-label={`Quitar imagen ${idx + 1}`}
-                    >
-                      x
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        <input
-          type="text"
-          name="name"
-          value={form.name || ""}
-          onChange={handleChange}
-          placeholder="Nombre del producto"
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        />
-        <textarea
-          name="description"
-          value={form.description || ""}
-          onChange={handleChange}
-          placeholder="Descripcion del producto"
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-        <select
-          name="categoryId"
-          value={
-            selectedCategoryOption?.categoryId ||
-            selectedCategoryOption?.value ||
-            ""
-          }
-          onChange={handleChange}
-          className="w-full p-2 border border-gray-300 rounded"
-          required
-        >
-          <option value="" disabled>
-            Selecciona una categoria
-          </option>
-          {categoryOptions.map((option) => (
-            <option
-              key={option.categoryId || option.value}
-              value={option.categoryId || option.value}
-            >
-              {option.label}
-            </option>
-          ))}
-        </select>
-        {!isClothingProduct && (
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input
-              type="checkbox"
-              checked={useVariants}
-              onChange={(e) => {
-                const nextChecked = e.target.checked;
-                setUseVariants(nextChecked);
-                setForm((prev) => ({
-                  ...prev,
-                  variants: nextChecked ? prev.variants || [] : [],
-                  stock: nextChecked ? undefined : (prev.stock ?? 1),
-                  price: nextChecked ? undefined : (prev.price ?? 1),
-                }));
-                setVariantErrors({});
-              }}
-            />
-            Este producto usa variantes
-          </label>
-        )}
-        {isClothingProduct ? (
-          <>
-            <select
-              name="genre"
-              value={form.genre || ""}
-              onChange={handleChange}
-              className="w-full p-2 border border-gray-300 rounded"
-              required
-            >
-              <option value="" disabled>
-                Selecciona un genero
-              </option>
-              <option value={Genre.NINO}>Nino</option>
-              <option value={Genre.NINA}>Nina</option>
-              <option value={Genre.UNISEX}>Unisex</option>
-            </select>
+  const imageSection = (
+    <CreateProductImagesSection
+      galleryInputRef={galleryInputRef}
+      cameraInputRef={cameraInputRef}
+      imagePreviews={imagePreviews}
+      onImageChange={handleImageChange}
+      onOpenCamera={openCamera}
+      onRemoveImage={removeImageAt}
+    />
+  );
 
-            <div className="border p-4 rounded bg-gray-50">
-              <h2 className="font-semibold mb-1">Detalle por talla</h2>
-              <p className="text-xs text-gray-600 mb-2">
-                Completa Talla, Stock y Precio para cada registro.
-              </p>
-              <div className="flex gap-2 mb-1 text-xs font-medium text-gray-600">
-                <span className="w-1/3">Talla</span>
-                <span className="w-1/3">Stock</span>
-                <span className="w-1/3">Precio</span>
-                <span className="sr-only">Accion</span>
-              </div>
-              <div className="flex gap-2 mb-2 items-end">
-                <select
-                  name="size"
-                  value={variant.size}
-                  onChange={handleVariantChange}
-                  className="p-2 border border-gray-300 rounded w-1/3"
-                >
-                  <option value="" disabled>
-                    Selecciona talla
-                  </option>
-                  {Object.values(Size).map((sz) => (
-                    <option key={sz} value={sz}>
-                      {formatSizeLabel(sz)}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  name="stock"
-                  value={variant.stock}
-                  onChange={handleVariantChange}
-                  onKeyDown={preventStockInvalidKeys}
-                  placeholder="Stock"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  className="p-2 border border-gray-300 rounded w-1/3"
-                />
-                <input
-                  type="number"
-                  name="price"
-                  value={variant.price}
-                  onChange={handleVariantChange}
-                  onKeyDown={preventPriceInvalidKeys}
-                  placeholder="Precio"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  className="p-2 border border-gray-300 rounded w-1/3"
-                />
-                <button
-                  onClick={handleAddVariant}
-                  className="bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
-                  type="button"
-                >
-                  Agregar
-                </button>
-              </div>
-              <div className="mb-2 space-y-1">
-                <p
-                  className={`text-xs ${
-                    variantErrors.name ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {variantErrors.name || "Cada talla solo puede aparecer una vez"}
-                </p>
-                <p
-                  className={`text-xs ${
-                    variantErrors.stock ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {variantErrors.stock || "Stock: solo enteros no negativos"}
-                </p>
-                <p
-                  className={`text-xs ${
-                    variantErrors.price ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  {variantErrors.price ||
-                    "Precio: numeros enteros o decimales no negativos"}
-                </p>
-              </div>
-              <ul className="space-y-1">
-                {(form.variants || []).map((v, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm">
-                    <span className="font-mono">
-                      Talla: {formatSizeLabel(v.size)}, Stock: {v.stock},
-                      Precio: ${v.price}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveVariant(idx)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Eliminar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </>
-        ) : shouldUseVariants ? (
-          <div className="border p-4 rounded bg-gray-50">
-            <h2 className="font-semibold mb-1">Variantes del producto</h2>
-            <p className="text-xs text-gray-600 mb-2">
-              Usa nombres como color, volumen o presentacion.
-            </p>
-            <div className="grid grid-cols-[minmax(0,1.3fr)_90px_110px_auto] gap-2 mb-2 items-end">
-              <label className="block text-sm font-medium text-gray-700">
-                Variante
-                <input
-                  type="text"
-                  name="name"
-                  value={variant.name}
-                  onChange={handleVariantChange}
-                  placeholder="Nombre de variante"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
-                />
-              </label>
-              <label className="block text-sm font-medium text-gray-700">
-                Stock
-                <input
-                  type="number"
-                  name="stock"
-                  value={variant.stock}
-                  onChange={handleVariantChange}
-                  onKeyDown={preventStockInvalidKeys}
-                  placeholder="Stock"
-                  min={0}
-                  step={1}
-                  inputMode="numeric"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
-                />
-              </label>
-              <label className="block text-sm font-medium text-gray-700">
-                Precio
-                <input
-                  type="number"
-                  name="price"
-                  value={variant.price}
-                  onChange={handleVariantChange}
-                  onKeyDown={preventPriceInvalidKeys}
-                  placeholder="Precio"
-                  min={0}
-                  step="any"
-                  inputMode="decimal"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded"
-                />
-              </label>
-              <button
-                onClick={handleAddVariant}
-                className="bg-green-600 text-white px-2 py-2 rounded hover:bg-green-700"
-                type="button"
-              >
-                Agregar
-              </button>
-            </div>
-            <div className="mb-2 space-y-1">
-              <p
-                className={`text-xs ${
-                  variantErrors.name ? "text-red-600" : "text-gray-500"
-                }`}
-              >
-                {variantErrors.name || "Nombre de variante obligatorio y unico"}
-              </p>
-              <p
-                className={`text-xs ${
-                  variantErrors.stock ? "text-red-600" : "text-gray-500"
-                }`}
-              >
-                {variantErrors.stock || "Stock: solo enteros no negativos"}
-              </p>
-              <p
-                className={`text-xs ${
-                  variantErrors.price ? "text-red-600" : "text-gray-500"
-                }`}
-              >
-                {variantErrors.price ||
-                  "Precio: numeros enteros o decimales no negativos"}
-              </p>
-            </div>
-            <ul className="space-y-1">
-              {(form.variants || []).map((v, idx) => (
-                <li key={idx} className="flex items-center gap-2 text-sm">
-                  <span className="font-mono">
-                    Variante: {getVariantName(v)}, Stock: {v.stock}, Precio: $
-                    {v.price}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveVariant(idx)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Eliminar
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block text-sm font-medium text-gray-700">
-              Stock
-              <input
-                type="number"
-                name="stock"
-                value={form.stock ?? ""}
-                onChange={handleChange}
-                onKeyDown={preventStockInvalidKeys}
-                placeholder="Stock"
-                min={0}
-                step={1}
-                inputMode="numeric"
-                className="mt-1 w-full p-2 border border-gray-300 rounded"
-                required
-              />
-            </label>
-            <label className="block text-sm font-medium text-gray-700">
-              Precio
-              <input
-                type="number"
-                name="price"
-                value={form.price ?? ""}
-                onChange={handleChange}
-                onKeyDown={preventPriceInvalidKeys}
-                placeholder="Precio"
-                min={0}
-                step="any"
-                inputMode="decimal"
-                className="mt-1 w-full p-2 border border-gray-300 rounded"
-                required
-              />
-            </label>
-          </div>
-        )}
-        <button
-          type="submit"
-          className="bg-brand-600 text-white px-4 py-2 rounded hover:bg-brand-700"
-          disabled={loading}
-        >
-          {loading ? "Creando..." : "Crear Producto"}
-        </button>
-        {error && <p className="text-red-600">{error}</p>}
-      </form>
-    </div>
+  const variantsSection = shouldUseVariants ? (
+    <CreateProductVariantsSection
+      formVariants={form.variants || []}
+      isClothingProduct={isClothingProduct}
+      variant={variant}
+      variantErrors={variantErrors}
+      onVariantChange={handleVariantChange}
+      onAddVariant={handleAddVariant}
+      onRemoveVariant={handleRemoveVariant}
+      onStockKeyDown={preventStockInvalidKeys}
+      onPriceKeyDown={preventPriceInvalidKeys}
+    />
+  ) : null;
+
+  return (
+    <ProductForm
+      title="Crear nuevo producto"
+      submitLabel="Crear Producto"
+      loadingLabel="Creando..."
+      loading={loading}
+      error={error}
+      form={form}
+      categoryOptions={categoryOptions}
+      selectedCategoryOption={selectedCategoryOption}
+      isClothingProduct={isClothingProduct}
+      shouldUseVariants={shouldUseVariants}
+      showVariantsToggle={!isClothingProduct}
+      imageSection={imageSection}
+      variantsSection={variantsSection}
+      onBack={() => router.push("/dashboard/products")}
+      onSubmit={handleSubmit}
+      onChange={handleChange}
+      onUseVariantsChange={(nextChecked) => {
+        setUseVariants(nextChecked);
+        setForm((prev) => ({
+          ...prev,
+          variants: nextChecked ? prev.variants || [] : [],
+          stock: nextChecked ? undefined : (prev.stock ?? 1),
+          price: nextChecked ? undefined : (prev.price ?? 1),
+        }));
+        setVariantErrors({});
+      }}
+      onStockKeyDown={preventStockInvalidKeys}
+      onPriceKeyDown={preventPriceInvalidKeys}
+    />
   );
 };
 

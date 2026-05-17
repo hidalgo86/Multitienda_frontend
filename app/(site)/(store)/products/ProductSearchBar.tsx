@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MdClose, MdSearch } from "react-icons/md";
 
 const SEARCH_KEYS = ["search", "page"] as const;
+const SEARCH_DEBOUNCE_MS = 450;
 
 export default function ProductSearchBar({
   initialSearch = "",
@@ -15,12 +16,13 @@ export default function ProductSearchBar({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(initialSearch);
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     setSearch(searchParams.get("search") || "");
   }, [searchParams]);
 
-  const updateSearch = (nextSearch: string) => {
+  const updateSearch = useCallback((nextSearch: string) => {
     const params = new URLSearchParams(searchParams.toString());
     SEARCH_KEYS.forEach((key) => params.delete(key));
 
@@ -30,8 +32,25 @@ export default function ProductSearchBar({
 
     params.set("page", "1");
     const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
-  };
+    startTransition(() => {
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    });
+  }, [pathname, router, searchParams, startTransition]);
+
+  useEffect(() => {
+    const currentSearch = searchParams.get("search") || "";
+    const nextSearch = search.trim();
+
+    if (nextSearch === currentSearch) return undefined;
+
+    const timer = window.setTimeout(() => {
+      updateSearch(nextSearch);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [search, searchParams, updateSearch]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

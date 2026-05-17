@@ -1,4 +1,4 @@
-import type { Product } from "@/types/domain/products";
+import type { Product, ProductCategoryOption } from "@/types/domain/products";
 import type { IconType } from "react-icons";
 
 type ProductActionHandler = (id: string) => void;
@@ -68,11 +68,13 @@ export interface SidebarMobileProps {
 
 export interface ProductFiltersProps {
   onFilterApply?: () => void;
+  categoryOptions?: ProductCategoryOption[];
 }
 
 export interface ProductFiltersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  categoryOptions?: ProductCategoryOption[];
 }
 
 export interface ProductPaginationProps {

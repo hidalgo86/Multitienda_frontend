@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Product } from "@/types/domain/products";
 import type { DashboardProductDetailPageProps } from "@/types/ui/products";
-import ProductDetailClient from "../../../(site)/(store)/products/[id]/ProductDetailClient";
+import ProductDetailClient from "@/features/products/components/ProductDetailClient";
 import { getProductById } from "@/services/products";
 import { getRequestBaseUrl } from "@/lib/requestBaseUrl";
 

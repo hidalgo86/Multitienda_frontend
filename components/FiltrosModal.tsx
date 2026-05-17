@@ -8,6 +8,7 @@ import Filtros from "./Filtros";
 export default function FiltrosModal({
   isOpen,
   onClose,
+  categoryOptions,
 }: ProductFiltersModalProps) {
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +70,7 @@ export default function FiltrosModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          <Filtros onFilterApply={onClose} />
+          <Filtros onFilterApply={onClose} categoryOptions={categoryOptions} />
         </div>
 
         <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">

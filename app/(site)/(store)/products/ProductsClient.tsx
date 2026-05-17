@@ -1,6 +1,6 @@
 import PublicListWrapper from "./PublicListWrapper";
 import Pagination from "./Pagination";
-import Filtros from "../../../../components/Filtros";
+import Filtros from "@/components/Filtros";
 import { notFound } from "next/navigation";
 import { MdTune } from "react-icons/md";
 import {
@@ -9,7 +9,9 @@ import {
   ProductSortBy,
   Size,
   allowedSizes,
+  buildProductCategoryOptions,
   parseGenre,
+  type Category,
 } from "@/types/domain/products";
 import FiltrosMobileButton from "./FiltrosMobileButton";
 import { listProducts } from "@/services/products";
@@ -51,25 +53,20 @@ const normalizeCategoryLookupValue = (value: string): string =>
 const resolveCategoryId = async (
   categoryId: string,
   category: string,
-  baseUrl: string,
+  categories: Category[],
 ) => {
   if (categoryId) return categoryId;
   if (!category) return "";
 
   const normalizedCategory = normalizeCategoryLookupValue(category);
 
-  try {
-    const categories = await listCategories({ baseUrl, cache: "no-store" });
-    return (
-      categories.find(
-        (item) =>
-          normalizeCategoryLookupValue(item.slug) === normalizedCategory ||
-          normalizeCategoryLookupValue(item.name) === normalizedCategory,
-      )?.id || ""
-    );
-  } catch {
-    return "";
-  }
+  return (
+    categories.find(
+      (item) =>
+        normalizeCategoryLookupValue(item.slug) === normalizedCategory ||
+        normalizeCategoryLookupValue(item.name) === normalizedCategory,
+    )?.id || ""
+  );
 };
 
 export default async function ProductsClient({
@@ -98,11 +95,11 @@ export default async function ProductsClient({
     : undefined;
 
   const baseUrl = await getRequestBaseUrl();
-  const resolvedCategoryId = await resolveCategoryId(
-    categoryId,
-    category,
-    baseUrl,
+  const categories = await listCategories({ baseUrl, cache: "force-cache" }).catch(
+    () => [],
   );
+  const categoryOptions = buildProductCategoryOptions(categories);
+  const resolvedCategoryId = await resolveCategoryId(categoryId, category, categories);
   const hasUnresolvedCategoryFilter = Boolean(category && !resolvedCategoryId);
 
   let data;
@@ -148,7 +145,10 @@ export default async function ProductsClient({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <FiltrosMobileButton activeCount={activeFiltersCount} />
+      <FiltrosMobileButton
+        activeCount={activeFiltersCount}
+        categoryOptions={categoryOptions}
+      />
 
       <div className="flex w-full min-w-0 flex-1">
         <aside
@@ -157,7 +157,7 @@ export default async function ProductsClient({
         >
           <div className="sticky top-24 p-5 xl:p-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <Filtros />
+              <Filtros categoryOptions={categoryOptions} />
             </div>
           </div>
         </aside>

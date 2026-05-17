@@ -4,6 +4,8 @@ import {
   readCategoriesFromData,
 } from "../categoryApi";
 
+export const revalidate = 300;
+
 interface GraphqlResponse {
   data?: Record<string, unknown>;
   errors?: Array<{ message?: string }>;
@@ -50,7 +52,7 @@ export async function GET() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: candidate.query }),
-        cache: "no-store",
+        next: { revalidate },
       });
 
       const payload = (await response.json()) as GraphqlResponse;

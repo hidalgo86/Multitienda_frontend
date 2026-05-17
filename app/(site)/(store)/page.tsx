@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import Carrusel from "../../../components/Carrusel/Carrusel";
-import Cards from "../../../components/Cards/Cards";
+import Carrusel from "@/components/Carrusel/Carrusel";
+import Cards from "@/components/Cards/Cards";
 import RecentlyViewedProducts from "@/components/products/RecentlyViewedProducts";
 import { listProducts } from "@/services/products";
 import { listCategories } from "@/services/categories";
+import { listPublicBanners } from "@/services/banners";
 import {
   ProductAvailability,
   ProductSortBy,
@@ -58,7 +60,7 @@ export default async function Home() {
   const baseUrl = await getRequestBaseUrl();
   const settings = await getServerBusinessSettings();
   const trustItems = getTrustItems(settings.pickupMessage);
-  const [newestProducts, categories] = await Promise.all([
+  const [newestProducts, categories, banners] = await Promise.all([
     listProducts(
       {
         page: 1,
@@ -70,7 +72,8 @@ export default async function Home() {
     )
       .then((response) => response.items ?? [])
       .catch(() => []),
-    listCategories({ baseUrl, cache: "no-store" }).catch(() => []),
+    listCategories({ baseUrl, cache: "force-cache" }).catch(() => []),
+    listPublicBanners({ baseUrl, cache: "force-cache" }).catch(() => []),
   ]);
   const visibleCategories = categories
     .filter((category) => category.isFeatured)
@@ -111,7 +114,7 @@ export default async function Home() {
         </h1>
 
         <div className="mt-2 sm:mt-4 lg:mt-0">
-          <Carrusel />
+          <Carrusel initialBanners={banners} />
         </div>
 
         <section
@@ -147,11 +150,12 @@ export default async function Home() {
                   className="group overflow-hidden rounded-lg border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-brand-50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={label}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      fill
+                      className="object-cover transition duration-300 group-hover:scale-105"
+                      sizes="(max-width: 1024px) 50vw, 25vw"
                     />
                   </div>
                   <div className="p-3 sm:p-4">

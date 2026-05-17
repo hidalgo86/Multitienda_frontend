@@ -6,7 +6,7 @@ import {
   getProductStatusLabel,
 } from "@/types/domain/products";
 import type { ProductCardPublicProps } from "@/types/ui/products";
-import { useSelector } from "react-redux";
+import { shallowEqual, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import {
   MdAdd,
@@ -83,10 +83,10 @@ const ProductCardPublic: React.FC<ProductCardPublicProps> = ({
   const variants = product.variants ?? [];
   const quickVariant = variants.find((variant) => (variant.stock || 0) > 0) || variants[0];
   const quickVariantName = getVariantName(quickVariant) || undefined;
-  const allCartItems = useSelector((state: RootState) => state.cart.items);
-  const cartItems = React.useMemo(
-    () => allCartItems.filter((item) => item.id === product.id),
-    [allCartItems, product.id],
+  const cartItems = useSelector(
+    (state: RootState) =>
+      state.cart.items.filter((item) => item.id === product.id),
+    shallowEqual,
   );
   const primaryCartItem =
     cartItems.find((item) => item.selectedSize === quickVariantName) ||
@@ -230,4 +230,4 @@ const ProductCardPublic: React.FC<ProductCardPublicProps> = ({
   );
 };
 
-export default ProductCardPublic;
+export default React.memo(ProductCardPublic);

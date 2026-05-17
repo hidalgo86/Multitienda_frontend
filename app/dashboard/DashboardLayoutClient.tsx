@@ -19,7 +19,6 @@ import {
   MdAssignment,
   MdGroups,
   MdInventory2,
-  MdLogout,
   MdManageSearch,
   MdSettings,
 } from "react-icons/md";
@@ -82,16 +81,6 @@ function DashboardLayoutContent({
       Icon: MdSettings,
     },
   ];
-  const mobileSidebarItems: SidebarItem[] = [
-    ...dashboardItems,
-    {
-      alt: "exit",
-      label: "Salir",
-      href: "/",
-      Icon: MdLogout,
-    },
-  ];
-
   const activeOption = React.useMemo(() => {
     if (pathname.includes("/dashboard/clients")) return "clients";
     if (pathname.includes("/dashboard/orders")) return "orders";
@@ -223,7 +212,7 @@ function DashboardLayoutContent({
           {children}
         </main>
       </div>
-      <SidebarMobile items={mobileSidebarItems} activeOption={activeOption} />
+      <SidebarMobile items={dashboardItems} activeOption={activeOption} />
     </div>
   );
 }

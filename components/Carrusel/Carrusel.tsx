@@ -9,14 +9,24 @@ import { getOptimizedCloudinaryUrl } from "@/lib/cloudinaryImages";
 const AUTOPLAY_DELAY_MS = 3000;
 const MANUAL_PAUSE_MS = 8000;
 
-export default function Carrusel() {
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+export default function Carrusel({
+  initialBanners = [],
+}: {
+  initialBanners?: Banner[];
+}) {
+  const [banners, setBanners] = useState<Banner[]>(initialBanners);
+  const [isLoaded, setIsLoaded] = useState(initialBanners.length > 0);
   const [actual, setActual] = useState(0);
   const [manualPauseVersion, setManualPauseVersion] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
+
+    if (initialBanners.length > 0) {
+      return () => {
+        isMounted = false;
+      };
+    }
 
     void listPublicBanners()
       .then((items) => {
@@ -34,7 +44,7 @@ export default function Carrusel() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialBanners.length]);
 
   const imagenes = banners.map((banner) => ({
     src:

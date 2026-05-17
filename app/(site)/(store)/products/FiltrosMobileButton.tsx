@@ -1,13 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { MdKeyboardArrowRight, MdTune } from "react-icons/md";
-import FiltrosModal from "../../../../components/FiltrosModal";
+import type { ProductCategoryOption } from "@/types/domain/products";
+
+const FiltrosModal = dynamic(() => import("@/components/FiltrosModal"), {
+  ssr: false,
+});
 
 export default function FiltrosMobileButton({
   activeCount = 0,
+  categoryOptions,
 }: {
   activeCount?: number;
+  categoryOptions?: ProductCategoryOption[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -45,7 +52,13 @@ export default function FiltrosMobileButton({
           </div>
         </button>
       </div>
-      <FiltrosModal isOpen={open} onClose={() => setOpen(false)} />
+      {open ? (
+        <FiltrosModal
+          isOpen={open}
+          onClose={() => setOpen(false)}
+          categoryOptions={categoryOptions}
+        />
+      ) : null}
     </>
   );
 }

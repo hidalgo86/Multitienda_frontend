@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { executeUsersGraphql } from "../../../users/graphqlClient";
-import { UserApiRouteError } from "../../../users/userApi.error";
+import { executeUsersGraphql } from "@/app/api/users/graphqlClient";
+import { UserApiRouteError } from "@/app/api/users/userApi.error";
 
 const adminCancelOrderMutation = `
   mutation AdminCancelOrder($orderId: String!) {

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getProductById, listProducts } from "@/services/products";
 import type { ProductPageProps } from "@/types/ui/products";
-import ProductDetailClient from "./ProductDetailClient";
+import ProductDetailClient from "@/features/products/components/ProductDetailClient";
 import {
   ProductAvailability,
   ProductSortBy,

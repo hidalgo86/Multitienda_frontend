@@ -10,8 +10,8 @@ type ProductImageProps = ImageProps & {
   fallbackSrc?: string;
 };
 
-const isRemoteImage = (src: ImageProps["src"]): boolean =>
-  typeof src === "string" && isAllowedRemoteImageUrl(src);
+const shouldBypassNextOptimizer = (src: ImageProps["src"]): boolean =>
+  typeof src === "string" && src.startsWith("http") && !isAllowedRemoteImageUrl(src);
 
 export default function ProductImage({
   src,
@@ -32,7 +32,7 @@ export default function ProductImage({
       {...props}
       src={currentSrc}
       alt={alt}
-      unoptimized={unoptimized ?? isRemoteImage(currentSrc)}
+      unoptimized={unoptimized ?? shouldBypassNextOptimizer(currentSrc)}
       onError={(event) => {
         if (currentSrc !== fallbackSrc) {
           setCurrentSrc(fallbackSrc);

@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { ProductByIdQueryResponse } from "@/types/api/products/graphql";
 import { normalizeProduct } from "../../normalizeProduct";
-import { getBackendAuthorization } from "../../../_utils/security";
+import { getBackendAuthorization } from "@/app/api/_utils/security";
 
 export async function GET(
   req: NextRequest,
